@@ -122,7 +122,13 @@ bool isFilterSelectedWithDefaults(
 
 enum ThemeSetting { dark, light }
 
-enum MethodAdded { email, shared, csv, preview }
+enum MethodAdded {
+  email,
+  shared,
+  csv,
+  preview,
+  appLink,
+}
 
 enum SharedStatus { waiting, shared, error }
 
@@ -1349,7 +1355,8 @@ class FinanceDatabase extends _$FinanceDatabase {
     // for onlyShowBasedOnTimeRange, but we don't want to include this day
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
       final query = selectOnly(transactions)
         ..join([
           innerJoin(categories,
@@ -1367,7 +1374,6 @@ class FinanceDatabase extends _$FinanceDatabase {
         ])
         ..addColumns([totalAmt])
         ..where(transactions.walletFk.equals(wallet.walletPk) &
-            transactions.paid.equals(true) &
             // If we use a budget time period,
             // Only calculate the net spending within that period!
             (end == null
@@ -5256,14 +5262,14 @@ class FinanceDatabase extends _$FinanceDatabase {
       AllWallets allWallets, Objective objective) {
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
       JoinedSelectStatement<$TransactionsTable, Transaction> query;
 
       query = selectOnly(transactions)
         ..addColumns([totalAmt])
         ..where(transactions.objectiveLoanFk.equals(objective.objectivePk) &
             transactions.walletFk.equals(wallet.walletPk) &
-            transactions.paid.equals(true) &
             transactions.income.equals(!objective.income));
 
       mergedStreams.add(query
@@ -5279,7 +5285,8 @@ class FinanceDatabase extends _$FinanceDatabase {
       AllWallets allWallets, Objective objective) {
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
       JoinedSelectStatement<$TransactionsTable, Transaction> query;
 
       query = selectOnly(transactions)
@@ -5287,8 +5294,7 @@ class FinanceDatabase extends _$FinanceDatabase {
         ..where((objective.type == ObjectiveType.loan
                 ? transactions.objectiveLoanFk.equals(objective.objectivePk)
                 : transactions.objectiveFk.equals(objective.objectivePk)) &
-            transactions.walletFk.equals(wallet.walletPk) &
-            transactions.paid.equals(true));
+            transactions.walletFk.equals(wallet.walletPk));
 
       mergedStreams.add(query
           .map(((row) =>
@@ -5303,7 +5309,8 @@ class FinanceDatabase extends _$FinanceDatabase {
       String objectivePk, ObjectiveType objectiveType) async {
     double totalAmount = 0;
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
       JoinedSelectStatement<$TransactionsTable, Transaction> query;
 
       query = selectOnly(transactions)
@@ -5312,8 +5319,7 @@ class FinanceDatabase extends _$FinanceDatabase {
           (objectiveType == ObjectiveType.loan
                   ? transactions.objectiveLoanFk.equals(objectivePk)
                   : transactions.objectiveLoanFk.equals(objectivePk)) &
-              transactions.walletFk.equals(wallet.walletPk) &
-              transactions.paid.equals(true),
+              transactions.walletFk.equals(wallet.walletPk),
         );
 
       totalAmount += await query
@@ -5364,8 +5370,8 @@ class FinanceDatabase extends _$FinanceDatabase {
     DateTime endDate = DateTime(end.year, end.month, end.day);
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
-      final date = transactions.dateCreated.date;
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
 
       JoinedSelectStatement<$TransactionsTable, Transaction> query =
           (selectOnly(transactions)
@@ -5374,7 +5380,6 @@ class FinanceDatabase extends _$FinanceDatabase {
               isInCategory(transactions, categoryFks, categoryFksExclude) &
                   onlyShowBasedOnTimeRange(
                       transactions, startDate, endDate, budget) &
-                  transactions.paid.equals(true) &
                   // (allCashFlow
                   //     ? transactions.income.isIn([true, false])
                   //     : transactions.income.equals(false)) &
@@ -5762,23 +5767,25 @@ class FinanceDatabase extends _$FinanceDatabase {
 
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
-      JoinedSelectStatement<$TransactionsTable,
-          Transaction> query = (selectOnly(transactions)
-        ..addColumns([totalAmt])
-        ..where(transactions.paid.equals(true) &
-            //transactions.income.equals(false) &
-            transactions.walletFk.equals(wallet.walletPk) &
-            onlyShowBasedOnTimeRange(transactions, startDate, endDate, null) &
-            onlyShowIfFollowsFilters(
-              transactions,
-              budget: null,
-              budgetTransactionFilters: null,
-              memberTransactionFilters: [
-                appStateSettings["currentUserEmail"] ?? ""
-              ],
-            ) &
-            transactions.sharedReferenceBudgetPk.equals(budgetPk)));
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
+      JoinedSelectStatement<$TransactionsTable, Transaction> query =
+          (selectOnly(transactions)
+            ..addColumns([totalAmt])
+            ..where(
+                //transactions.income.equals(false) &
+                transactions.walletFk.equals(wallet.walletPk) &
+                    onlyShowBasedOnTimeRange(
+                        transactions, startDate, endDate, null) &
+                    onlyShowIfFollowsFilters(
+                      transactions,
+                      budget: null,
+                      budgetTransactionFilters: null,
+                      memberTransactionFilters: [
+                        appStateSettings["currentUserEmail"] ?? ""
+                      ],
+                    ) &
+                    transactions.sharedReferenceBudgetPk.equals(budgetPk)));
       mergedStreams.add(query
           .map(((row) =>
               (row.read(totalAmt) ?? 0) *
@@ -5802,7 +5809,8 @@ class FinanceDatabase extends _$FinanceDatabase {
     DateTime endDate = DateTime(end.year, end.month, end.day);
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
       JoinedSelectStatement<$TransactionsTable, Transaction> query;
 
       query = (selectOnly(transactions)
@@ -5811,7 +5819,6 @@ class FinanceDatabase extends _$FinanceDatabase {
                 ? transactions.dateCreated.isNotNull()
                 : transactions.dateCreated
                     .isBetweenValues(startDate, endDate)) &
-            transactions.paid.equals(true) &
             //transactions.income.equals(false) &
             transactions.walletFk.equals(wallet.walletPk) &
             isInCategory(transactions, categoryFks, categoryFksExclude) &
@@ -6112,7 +6119,10 @@ class FinanceDatabase extends _$FinanceDatabase {
     for (TransactionWallet wallet in allWallets.list) {
       if (walletPks != null && walletPks.contains(wallet.walletPk) == false)
         continue;
-      final totalAmt = transactions.amount.sum();
+      final totalAmt = transactions.amount.sum(
+          filter: paidOnly == true
+              ? transactions.paid.equals(true)
+              : Constant(true));
       final query = selectOnly(transactions)
         ..addColumns([totalAmt])
         // This query should match that of the one below!
@@ -6137,9 +6147,6 @@ class FinanceDatabase extends _$FinanceDatabase {
               cycleSettingsExtension: cycleSettingsExtension,
               forcedDateTimeRange: forcedDateTimeRange,
             ) &
-            (paidOnly == true
-                ? transactions.paid.equals(true)
-                : Constant(true)) &
             // evaluateIfNull(tbl.income.equals(income ?? false), income, true) &
             transactions.walletFk.equals(wallet.walletPk) &
             onlyShowIfFollowsFilters(transactions,
@@ -6199,7 +6206,10 @@ class FinanceDatabase extends _$FinanceDatabase {
     for (TransactionWallet wallet in allWallets.list) {
       if (walletPks != null && walletPks.contains(wallet.walletPk) == false)
         continue;
-      final totalAmt = transactions.amount.sum();
+      final totalAmt = transactions.amount.sum(
+          filter: (paidOnly == true
+              ? transactions.paid.equals(true)
+              : Constant(true)));
       final totalCount = transactions.transactionPk.count();
 
       final query = (select(transactions)
@@ -6226,7 +6236,6 @@ class FinanceDatabase extends _$FinanceDatabase {
                 cycleSettingsExtension: cycleSettingsExtension,
                 forcedDateTimeRange: forcedDateTimeRange,
               ) &
-              (paidOnly == true ? tbl.paid.equals(true) : Constant(true)) &
               // evaluateIfNull(tbl.income.equals(income ?? false), income, true) &
               transactions.walletFk.equals(wallet.walletPk) &
               onlyShowIfFollowsFilters(tbl,
@@ -6342,8 +6351,10 @@ class FinanceDatabase extends _$FinanceDatabase {
     List<Stream<TotalWithCount?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
       final totalAmt = useAbsoluteSum
-          ? transactions.amount.abs().sum()
-          : transactions.amount.sum();
+          ? transactions.amount
+              .abs()
+              .sum(filter: transactions.paid.equals(true))
+          : transactions.amount.sum(filter: transactions.paid.equals(true));
       final totalCount = transactions.transactionPk.count();
       final query = selectOnly(transactions)
         ..addColumns([totalAmt, totalCount])
@@ -6356,7 +6367,6 @@ class FinanceDatabase extends _$FinanceDatabase {
             (onlyShowIfNotBalanceCorrection(transactions, isIncome) |
                 Constant(includeBalanceCorrection)) &
             onlyShowIfOnlyExpenseAndIncome(transactions, onlyIncomeAndExpense) &
-            transactions.paid.equals(true) &
             onlyShowIfFollowCustomPeriodCycle(
               transactions,
               followCustomPeriodCycle,
@@ -6382,7 +6392,8 @@ class FinanceDatabase extends _$FinanceDatabase {
     bool? isIncome = null,
     DateTime? startDate,
   }) {
-    final totalAmt = transactions.amount.sum();
+    final totalAmt =
+        transactions.amount.sum(filter: transactions.paid.equals(true));
     final query = selectOnly(transactions)
       ..addColumns([totalAmt])
       ..where((startDate == null
@@ -6394,8 +6405,7 @@ class FinanceDatabase extends _$FinanceDatabase {
                   ? transactions.income.equals(true)
                   : transactions.income.equals(false)) &
           transactions.walletFk.equals(walletPk) &
-          onlyShowIfNotBalanceCorrection(transactions, isIncome) &
-          transactions.paid.equals(true));
+          onlyShowIfNotBalanceCorrection(transactions, isIncome));
     return query.map((row) => row.read(totalAmt)).watchSingleOrNull();
   }
 
@@ -6436,8 +6446,8 @@ class FinanceDatabase extends _$FinanceDatabase {
                 withCategories: true,
                 joinedWithSubcategoriesTable: subCategories) &
             // transactions.income.equals(false) &
-            transactions.skipPaid.equals(false) &
             transactions.paid.equals(false) &
+            transactions.skipPaid.equals(false) &
             transactions.walletFk.equals(wallet.walletPk) &
             (isOverdueTransactions == null
                 ? Constant(true)
@@ -6514,7 +6524,6 @@ class FinanceDatabase extends _$FinanceDatabase {
                       cycleSettingsExtension: cycleSettingsExtension,
                       forcedDateTimeRange: forcedDateTimeRange,
                     )) &
-              transactions.paid.equals(true) &
               (transactions.objectiveLoanFk.isNull() |
                   objectives.archived.equals(false)) &
               (selectedTab == 0 && searchString != null
@@ -6534,6 +6543,7 @@ class FinanceDatabase extends _$FinanceDatabase {
                   : ((objectives.name
                       .collate(Collate.noCase)
                       .like("%" + (searchString ?? "") + "%")))) &
+              transactions.paid.equals(true) &
               transactions.walletFk.equals(wallet.walletPk) &
               (isCredit == null
                   ? transactions.type
@@ -6766,12 +6776,12 @@ class FinanceDatabase extends _$FinanceDatabase {
     // for onlyShowBasedOnTimeRange, but we don't want to include this day
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt =
+          transactions.amount.sum(filter: transactions.paid.equals(true));
       final query = selectOnly(transactions)
         ..addColumns([totalAmt])
         ..where(
           transactions.walletFk.equals(wallet.walletPk) &
-              transactions.paid.equals(true) &
               transactions.dateCreated.isSmallerOrEqualValue(startDate) &
               onlyShowIfFollowsSearchFilters(transactions, searchFilters,
                   joinedWithSubcategoriesTable: null,
@@ -6836,7 +6846,9 @@ class FinanceDatabase extends _$FinanceDatabase {
     DateTime startDate = DateTime(start.year, start.month, start.day - 1);
     List<Stream<double?>> mergedStreams = [];
     for (TransactionWallet wallet in allWallets.list) {
-      final totalAmt = transactions.amount.sum();
+      final totalAmt = transactions.amount.sum(
+          filter:
+              evaluateIfNull(transactions.paid.equals(true), isPaidOnly, true));
       final query = selectOnly(transactions)
         ..addColumns([totalAmt])
         ..where(onlyShowIfFollowsSearchFilters(transactions, searchFilters,
@@ -6853,7 +6865,6 @@ class FinanceDatabase extends _$FinanceDatabase {
             ) &
             evaluateIfNull(transactions.categoryFk.isIn(categoryFks),
                 categoryFks.length <= 0 ? null : true, true) &
-            evaluateIfNull(transactions.paid.equals(true), isPaidOnly, true) &
             onlyShowIfFollowsFilters(transactions,
                 budget: budget,
                 budgetTransactionFilters: budgetTransactionFilters,
