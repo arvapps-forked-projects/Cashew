@@ -2,6 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/breathingAnimation.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/tappable.dart';
@@ -11,36 +12,51 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 
-Future<bool?> checkBiometrics({
+enum AuthResult {
+  waiting,
+  authenticated,
+  unauthenticated,
+  error,
+  errorBackupRestoreLaunch,
+}
+
+Future<AuthResult> checkBiometrics({
   bool checkAlways = false,
 }) async {
   try {
-    final LocalAuthentication auth = LocalAuthentication();
-    biometricsAvailable = kIsWeb == false && await auth.canCheckBiometrics ||
-        await auth.isDeviceSupported();
+    if (kIsWeb) {
+      authAvailable = false;
+      await updateSettings("requireAuth", false, updateGlobalState: false);
+      return AuthResult.authenticated;
+    }
 
-    if (kIsWeb) return true;
+    final LocalAuthentication auth = LocalAuthentication();
+    authAvailable =
+        await auth.canCheckBiometrics || await auth.isDeviceSupported();
 
     final bool requireAuth =
         checkAlways || appStateSettings["requireAuth"] == true;
-    if (requireAuth == false) return true;
+    if (requireAuth == false) return AuthResult.authenticated;
 
     await auth.stopAuthentication();
 
-    if (biometricsAvailable == false) {
-      return await auth.authenticate(
+    if (authAvailable) {
+      bool biometricsOnly = (await auth.canCheckBiometrics);
+      return (await auth.authenticate(
         localizedReason: "verify-identity".tr(),
-        options: const AuthenticationOptions(biometricOnly: false),
-      );
-    } else if (biometricsAvailable == true) {
-      return await auth.authenticate(
-        localizedReason: "verify-identity".tr(),
-        options: const AuthenticationOptions(biometricOnly: true),
-      );
+        options: AuthenticationOptions(biometricOnly: biometricsOnly),
+      ))
+          ? AuthResult.authenticated
+          : AuthResult.unauthenticated;
     }
-    return null;
+
+    return isDatabaseImportedOnThisSession
+        ? AuthResult.errorBackupRestoreLaunch
+        : AuthResult.error;
   } catch (e) {
-    return null;
+    return isDatabaseImportedOnThisSession
+        ? AuthResult.errorBackupRestoreLaunch
+        : AuthResult.error;
   }
 }
 
@@ -53,8 +69,7 @@ class InitializeBiometrics extends StatefulWidget {
 }
 
 class _InitializeBiometricsState extends State<InitializeBiometrics> {
-  bool? authenticated;
-  bool hasErrored = false;
+  AuthResult authResult = AuthResult.waiting;
   @override
   void initState() {
     super.initState();
@@ -64,22 +79,16 @@ class _InitializeBiometricsState extends State<InitializeBiometrics> {
   }
 
   _biometricCheck() async {
-    bool? result = await checkBiometrics();
+    AuthResult result = await checkBiometrics();
     setState(() {
-      authenticated = result;
+      authResult = result;
     });
-    if (result == null) {
-      // Only allow bypass if importing database backup
-      if (isDatabaseImportedOnThisSession) {
-        _biometricErrorPopup();
-        setState(() {
-          authenticated = true;
-        });
-      } else {
-        setState(() {
-          hasErrored = true;
-        });
-      }
+    if (authResult == AuthResult.errorBackupRestoreLaunch) {
+      // Allow bypass on initial backup restore launch
+      _biometricErrorPopup();
+      setState(() {
+        authResult = AuthResult.authenticated;
+      });
     }
   }
 
@@ -116,7 +125,7 @@ class _InitializeBiometricsState extends State<InitializeBiometrics> {
       body: Tappable(
         onTap: () async {
           setState(() {
-            authenticated = null;
+            authResult = AuthResult.waiting;
           });
           _biometricCheck();
         },
@@ -136,7 +145,7 @@ class _InitializeBiometricsState extends State<InitializeBiometrics> {
                     return FadeScaleTransition(
                         animation: animation, child: child);
                   },
-                  child: authenticated == false || hasErrored
+                  child: authResult != AuthResult.waiting
                       ? Icon(
                           Icons.lock,
                           size: 50,
@@ -146,8 +155,10 @@ class _InitializeBiometricsState extends State<InitializeBiometrics> {
                 ),
               ),
             ),
-            if (hasErrored)
-              Padding(
+            AnimatedExpanded(
+              expand: authResult == AuthResult.error ||
+                  authResult == AuthResult.errorBackupRestoreLaunch,
+              child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
                 child: TextFont(
@@ -159,11 +170,12 @@ class _InitializeBiometricsState extends State<InitializeBiometrics> {
                   fontSize: 16,
                 ),
               ),
+            ),
           ],
         ),
       ),
     );
-    if (authenticated == true) {
+    if (authResult == AuthResult.authenticated) {
       child = SizedBox(key: ValueKey(1), child: widget.child);
     }
     return AnimatedSwitcher(
