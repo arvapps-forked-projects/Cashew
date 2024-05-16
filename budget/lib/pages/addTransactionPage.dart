@@ -412,7 +412,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
             children: [
               SelectTransactionTypePopup(
                 setTransactionType: (type) {},
-                selectedTransactionType: selectedType,
+                selectedTransactionType: null,
                 onlyShowOneTransactionType: selectedType,
               ),
               Padding(
@@ -794,6 +794,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                 afterSetTitle();
               },
               noteInputController: _noteInputController,
+              setSelectedNoteController: setSelectedNoteController,
               setSelectedDateTime: (DateTime date) {
                 setState(() {
                   selectedDate = date;
@@ -1217,6 +1218,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 TappableTextEntry(
+                                  addTappableBackground: true,
                                   title: selectedPeriodLength.toString(),
                                   placeholder: "0",
                                   showPlaceHolderWhenTextEquals: "0",
@@ -1243,11 +1245,12 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                                   fontSize: 23,
                                   fontWeight: FontWeight.bold,
                                   internalPadding: EdgeInsets.symmetric(
-                                      vertical: 4, horizontal: 4),
+                                      vertical: 4, horizontal: 6),
                                   padding: EdgeInsets.symmetric(
-                                      vertical: 0, horizontal: 3),
+                                      vertical: 0, horizontal: 4),
                                 ),
                                 TappableTextEntry(
+                                  addTappableBackground: true,
                                   title: selectedRecurrenceDisplay
                                       .toString()
                                       .toLowerCase()
@@ -1276,7 +1279,7 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                                   fontSize: 23,
                                   fontWeight: FontWeight.bold,
                                   internalPadding: EdgeInsets.symmetric(
-                                      vertical: 4, horizontal: 4),
+                                      vertical: 4, horizontal: 6),
                                   padding: EdgeInsets.symmetric(
                                       vertical: 0, horizontal: 3),
                                 ),
@@ -2387,6 +2390,7 @@ class SelectTitle extends StatefulWidget {
     this.selectedTitle,
     this.selectedDate,
     required this.noteInputController,
+    required this.setSelectedNoteController,
     this.next,
     this.disableAskForNote = false,
     this.customTitleInputWidgetBuilder,
@@ -2399,6 +2403,7 @@ class SelectTitle extends StatefulWidget {
   final String? selectedTitle;
   final DateTime? selectedDate;
   final TextEditingController noteInputController;
+  final dynamic Function(String, {bool setInput}) setSelectedNoteController;
   final VoidCallback? next;
   final bool disableAskForNote;
   final Widget Function(FocusNode enterTitleFocus)?
@@ -2658,16 +2663,10 @@ class _SelectTitleState extends State<SelectTitle> {
                         child: TransactionNotesTextInput(
                           noteInputController: widget.noteInputController,
                           setNotesInputFocused: (isFocused) {},
-                          setSelectedNoteController: (note, {setInput = true}) {
-                            // Adding this line jumps cursor to the end when editing,
-                            // we don't need because the noteInputController is already passed in!
-                            // widget.setSelectedNote(note);
-
-                            // Update the size of the bottom sheet
-                            // Need to do it slowly because the link container size is animated slowly
-                            Future.delayed(Duration(milliseconds: 200), () {
-                              bottomSheetControllerGlobal.scrollTo(0);
-                            });
+                          setSelectedNoteController: (note,
+                              {bool setInput = true}) {
+                            widget.setSelectedNoteController(note,
+                                setInput: setInput);
                           },
                         ),
                       ),
@@ -3629,11 +3628,13 @@ class SelectTransactionTypePopup extends StatelessWidget {
         ),
         SizedBox(height: 13),
         Tappable(
-          color: dynamicPastel(
-            context,
-            Theme.of(context).colorScheme.secondaryContainer,
-            amount: 0.5,
-          ),
+          color: appStateSettings["materialYou"] == true
+              ? dynamicPastel(
+                  context,
+                  Theme.of(context).colorScheme.secondaryContainer,
+                  amount: 0.5,
+                )
+              : getColor(context, "canvasContainer"),
           borderRadius: getPlatform() == PlatformOS.isIOS ? 10 : 15,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 15),
@@ -3655,6 +3656,8 @@ class SelectTransactionTypePopup extends StatelessWidget {
                     highlightActionButton: true,
                     useHorizontalPaddingConstrained: false,
                     openPage: Container(),
+                    containerColor:
+                        Theme.of(context).canvasColor.withOpacity(0.5),
                     transaction: Transaction(
                       transactionPk: "-1",
                       name: "",
