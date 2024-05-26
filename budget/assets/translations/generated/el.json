@@ -1,7 +1,6 @@
 {
   "default-account-name": "Τράπεζα",
   "default-budget-name": "Προϋπολογισμός",
-  "current-budget-period": "Τωρινή περίοδος",
   "budget-history": "Ιστορικό του προϋπολογισμού",
   "home": "Σπίτι",
   "transactions": "Συναλλαγές",
@@ -1141,8 +1140,12 @@
   "no-subscription-transactions": "Δεν υπάρχουν συνδρομητικές συναλλαγές.",
   "tools-and-extras": "Εργαλεία & Έξτρα",
   "transaction-activity-log": "Αρχείο καταγραφής δραστηριότητας συναλλαγών",
-  "activty-log": "Αρχείο καταγραφής δραστηριότητας",
+  "activity-log": "Αρχείο καταγραφής δραστηριότητας",
   "modified": "Τροποποιήθηκε",
   "restore-transaction": "Επαναφορά συναλλαγής;",
-  "created": "Δημιουργήθηκε"
+  "created": "Δημιουργήθηκε",
+  "tap-each-section-to-customize": "Πατήστε κάθε ενότητα για προσαρμογή",
+  "transaction-no-longer-available": "Η συναλλαγή διαγράφηκε και δεν είναι πλέον διαθέσιμη για ανάκτηση",
+  "category-not-available": "Η κατηγορία δεν είναι διαθέσιμη",
+  "the-original-category-has-been-deleted": "Η αρχική κατηγορία έχει διαγραφεί και η συναλλαγή δεν μπορεί να ανακτηθεί."
 }

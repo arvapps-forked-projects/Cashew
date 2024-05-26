@@ -1,7 +1,6 @@
 {
   "default-account-name": "Banco",
   "default-budget-name": "Presupuesto",
-  "current-budget-period": "Período actual",
   "budget-history": "Historial de presupuestos",
   "home": "Inicio",
   "transactions": "Transacciones",
@@ -1141,8 +1140,12 @@
   "no-subscription-transactions": "Sin transacciones de suscripción.",
   "tools-and-extras": "Herramientas y extras",
   "transaction-activity-log": "Registro de actividad de transacciones",
-  "activty-log": "Registro de actividades",
+  "activity-log": "Registro de actividades",
   "modified": "Modificado",
   "restore-transaction": "¿Restaurar transacción?",
-  "created": "Creado"
+  "created": "Creado",
+  "tap-each-section-to-customize": "Toca cada sección para personalizarla",
+  "transaction-no-longer-available": "La transacción fue eliminada y ya no está disponible para recuperarse.",
+  "category-not-available": "Categoría no disponible",
+  "the-original-category-has-been-deleted": "La categoría original ha sido eliminada y la transacción no se puede recuperar."
 }

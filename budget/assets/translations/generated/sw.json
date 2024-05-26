@@ -1,7 +1,6 @@
 {
   "default-account-name": "Benki",
   "default-budget-name": "Bajeti",
-  "current-budget-period": "Kipindi cha sasa",
   "budget-history": "Historia ya Bajeti",
   "home": "Nyumbani",
   "transactions": "Miamala",
@@ -1141,8 +1140,12 @@
   "no-subscription-transactions": "Hakuna shughuli za usajili.",
   "tools-and-extras": "Zana na Ziada",
   "transaction-activity-log": "Kumbukumbu ya Shughuli ya Muamala",
-  "activty-log": "Kumbukumbu ya Shughuli",
+  "activity-log": "Kumbukumbu ya Shughuli",
   "modified": "Imebadilishwa",
   "restore-transaction": "Ungependa kurejesha Muamala?",
-  "created": "Imeundwa"
+  "created": "Imeundwa",
+  "tap-each-section-to-customize": "Gusa kila sehemu ili kubinafsisha",
+  "transaction-no-longer-available": "Muamala ulifutwa na haupatikani tena kurejesha",
+  "category-not-available": "Aina Haipatikani",
+  "the-original-category-has-been-deleted": "Kategoria asili imefutwa na muamala hauwezi kurejeshwa."
 }

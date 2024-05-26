@@ -28,6 +28,7 @@ String getChangelogString() {
   return """
     < 5.3.0
     Revamped scheduled transactions page: see an extrapolated total average per month or year
+    Transaction activity log page: see recently deleted/modified transactions
     Copy transaction details to clipboard by tapping/long pressing transaction count in selected transactions app bar
     Centered bottom navigation bar labels
     Improve biometric lock workflow and biometric unlock error
@@ -37,6 +38,7 @@ String getChangelogString() {
     Added info point about next repetitive transaction will be generated after current marked as paid 
     Titles with the same category and name are automatically deleted
     Manual adding/editing of associated title can be configured to subcategory
+    Add hint text about editing homepage sections
     Fix associated titles order priority when recommending title
     Fix upcoming transactions not marked as paid when notification activated
     Fix if decimal precision limit empty when entering amount, default to 2 instead of 0

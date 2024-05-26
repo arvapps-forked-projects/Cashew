@@ -1,7 +1,6 @@
 {
   "default-account-name": "المصرف",
   "default-budget-name": "الميزانية",
-  "current-budget-period": "الفترة الحالية",
   "budget-history": "سجل الميزانية",
   "home": "المنزل",
   "transactions": "المعاملات",
@@ -1141,8 +1140,12 @@
   "no-subscription-transactions": "لا توجد معاملات الاشتراك.",
   "tools-and-extras": "الأدوات والإضافات",
   "transaction-activity-log": "سجل نشاط المعاملة",
-  "activty-log": "سجل النشاطات",
+  "activity-log": "سجل النشاطات",
   "modified": "معدل",
   "restore-transaction": "استعادة المعاملة؟",
-  "created": "مخلوق"
+  "created": "مخلوق",
+  "tap-each-section-to-customize": "اضغط على كل قسم لتخصيصه",
+  "transaction-no-longer-available": "تم حذف المعاملة ولم تعد متاحة للاسترداد",
+  "category-not-available": "الفئة غير متوفرة",
+  "the-original-category-has-been-deleted": "تم حذف الفئة الأصلية ولا يمكن استرداد المعاملة."
 }

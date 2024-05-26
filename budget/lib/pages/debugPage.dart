@@ -43,7 +43,6 @@ class DebugPage extends StatelessWidget {
         fontWeight: FontWeight.bold,
         fontSize: 20,
         maxLines: 5,
-        textAlign: TextAlign.center,
       ),
       subtitleAlignment: Alignment.bottomLeft,
       subtitleSize: 10,
@@ -161,18 +160,6 @@ class DebugPage extends StatelessWidget {
               ? Icons.battery_charging_full_outlined
               : Icons.battery_charging_full_rounded,
         ),
-        DangerousDebugFlag(
-          child: SettingsContainerSwitch(
-            title: "Mass edit selected transactions",
-            onSwitched: (value) {
-              updateSettings("massEditSelectedTransactions", value,
-                  pagesNeedingRefresh: [0], updateGlobalState: false);
-            },
-            initialValue:
-                appStateSettings["massEditSelectedTransactions"] == true,
-            icon: Icons.edit,
-          ),
-        ),
         if (getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid)
           SettingsContainerSwitch(
             onSwitched: (value) async {
@@ -212,6 +199,18 @@ class DebugPage extends StatelessWidget {
           icon: appStateSettings["outlinedIcons"]
               ? Icons.swap_vert_outlined
               : Icons.swap_vert_rounded,
+        ),
+        SettingsContainerSwitch(
+          title: "Colorful Net Totals".tr(),
+          description:
+              "Negative totals indicated with red, positive with green",
+          onSwitched: (value) {
+            updateSettings("netTotalsColorful", value, updateGlobalState: true);
+          },
+          initialValue: appStateSettings["netTotalsColorful"] == true,
+          icon: appStateSettings["outlinedIcons"]
+              ? Icons.format_color_text_outlined
+              : Icons.format_color_text_rounded,
         ),
         DangerousDebugFlag(
           child: SettingsContainerSwitch(

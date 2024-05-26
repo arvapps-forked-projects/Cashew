@@ -1,7 +1,6 @@
 {
   "default-account-name": "Bank",
   "default-budget-name": "Belanjawan",
-  "current-budget-period": "Tempoh semasa",
   "budget-history": "Sejarah Belanjawan",
   "home": "Rumah",
   "transactions": "Urus niaga",
@@ -1141,8 +1140,12 @@
   "no-subscription-transactions": "Tiada transaksi langganan.",
   "tools-and-extras": "Alat & Tambahan",
   "transaction-activity-log": "Log Aktiviti Transaksi",
-  "activty-log": "Log aktiviti",
+  "activity-log": "Log aktiviti",
   "modified": "Diubah suai",
   "restore-transaction": "Pulihkan Transaksi?",
-  "created": "Dicipta"
+  "created": "Dicipta",
+  "tap-each-section-to-customize": "Ketik setiap bahagian untuk menyesuaikan",
+  "transaction-no-longer-available": "Urus niaga telah dipadamkan dan tidak lagi tersedia untuk dipulihkan",
+  "category-not-available": "Kategori Tidak Tersedia",
+  "the-original-category-has-been-deleted": "Kategori asal telah dipadamkan dan transaksi tidak boleh dipulihkan."
 }

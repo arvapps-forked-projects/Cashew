@@ -1,7 +1,6 @@
 {
   "default-account-name": "Bancă",
   "default-budget-name": "Buget",
-  "current-budget-period": "Perioada curenta",
   "budget-history": "Istoric bugetar",
   "home": "Acasă",
   "transactions": "Tranzacții",
@@ -1141,8 +1140,12 @@
   "no-subscription-transactions": "Fără tranzacții cu abonament.",
   "tools-and-extras": "Instrumente și accesorii suplimentare",
   "transaction-activity-log": "Jurnalul activității tranzacției",
-  "activty-log": "Jurnalul de activitate",
+  "activity-log": "Jurnalul de activitate",
   "modified": "Modificat",
   "restore-transaction": "Restabiliți tranzacția?",
-  "created": "Creată"
+  "created": "Creată",
+  "tap-each-section-to-customize": "Atingeți fiecare secțiune pentru a personaliza",
+  "transaction-no-longer-available": "Tranzacția a fost ștearsă și nu mai este disponibilă pentru recuperare",
+  "category-not-available": "Categoria nu este disponibilă",
+  "the-original-category-has-been-deleted": "Categoria inițială a fost ștearsă și tranzacția nu poate fi recuperată."
 }
