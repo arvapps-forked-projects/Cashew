@@ -30,11 +30,13 @@ String getChangelogString() {
     Revamped scheduled transactions page: see an extrapolated total average per month or year
     Transaction activity log page: see recently deleted/modified transactions
     Copy transaction details to clipboard by tapping/long pressing transaction count in selected transactions app bar
+    Ability to expand category spending goals in a budget even if there is no spending on that category
     Centered bottom navigation bar labels
     Improve biometric lock workflow and biometric unlock error
     Collapsible section for upcoming transactions will appear when 3 or more instead of 5
     Increased decimal precision limit to 12
     New deep link parameters (A)
+    Deep links prioritize exact name for categories before applying a search (A)
     Added info point about next repetitive transaction will be generated after current marked as paid 
     Titles with the same category and name are automatically deleted
     Manual adding/editing of associated title can be configured to subcategory

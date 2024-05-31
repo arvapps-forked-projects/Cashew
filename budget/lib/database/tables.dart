@@ -2824,26 +2824,57 @@ class FinanceDatabase extends _$FinanceDatabase {
   }
 
   Future<TransactionCategory?> getRelatingCategory(String searchFor,
-      {int? limit, int? offset, bool onlySubCategories = false}) async {
-    return (await (select(categories)
-              ..where((c) =>
-                  (onlySubCategories
-                      ? onlyShowMainCategoryListing(c).not()
-                      : onlyShowMainCategoryListing(c)) &
-                  c.name.collate(Collate.noCase).like("%" + searchFor + "%"))
-              ..limit(limit ?? DEFAULT_LIMIT, offset: offset ?? DEFAULT_OFFSET))
-            .get())
-        .firstOrNull;
+      {bool onlySubCategories = false,
+      String? mainCategoryPkMustBe = null}) async {
+    Future<TransactionCategory?> getCategory(
+            Expression<bool> nameMatching) async =>
+        (await (select(categories)
+                  ..where((c) =>
+                      (onlySubCategories
+                          ? onlyShowMainCategoryListing(c).not()
+                          : onlyShowMainCategoryListing(c)) &
+                      evaluateIfNull(
+                          c.mainCategoryPk.equals(mainCategoryPkMustBe ?? ""),
+                          mainCategoryPkMustBe,
+                          true) &
+                      nameMatching)
+                  ..orderBy([(c) => OrderingTerm.desc(c.order)])
+                  ..limit(1))
+                .get())
+            .firstOrNull;
+
+    TransactionCategory? category;
+    category = await getCategory(categories.name.equals(searchFor));
+    if (category == null)
+      category = await getCategory(categories.name
+          .lower()
+          .trim()
+          .equals(searchFor.toLowerCase().trim()));
+    if (category == null)
+      category = await getCategory(
+          categories.name.collate(Collate.noCase).like("%" + searchFor + "%"));
+    return category;
   }
 
-  Future<TransactionWallet?> getRelatingWallet(String searchFor,
-      {int? limit}) async {
-    return (await (select(wallets)
-              ..where((c) =>
-                  c.name.collate(Collate.noCase).like("%" + searchFor + "%"))
-              ..limit(limit ?? DEFAULT_LIMIT))
-            .get())
-        .firstOrNull;
+  Future<TransactionWallet?> getRelatingWallet(String searchFor) async {
+    Future<TransactionWallet?> getCategory(
+            Expression<bool> nameMatching) async =>
+        (await (select(wallets)
+                  ..where((w) => nameMatching)
+                  ..limit(1)
+                  ..orderBy([(w) => OrderingTerm.desc(w.order)]))
+                .get())
+            .firstOrNull;
+
+    TransactionWallet? wallet;
+    wallet = await getCategory(wallets.name.equals(searchFor));
+    if (wallet == null)
+      wallet = await getCategory(
+          wallets.name.lower().trim().equals(searchFor.toLowerCase().trim()));
+    if (wallet == null)
+      wallet = await getCategory(
+          wallets.name.collate(Collate.noCase).like("%" + searchFor + "%"));
+    return wallet;
   }
 
   Stream<List<TransactionAssociatedTitle>> watchAllAssociatedTitlesInCategory(
@@ -2872,6 +2903,29 @@ class FinanceDatabase extends _$FinanceDatabase {
     return (select(categoryBudgetLimits)
           ..where((t) => t.budgetFk.equals(budgetPk)))
         .watch();
+  }
+
+  Stream<List<CategoryWithTotal>> watchAllCategoryLimitsInBudgetWithCategory(
+      String budgetPk) {
+    final query = (select(categories));
+    return (query.join([
+      leftOuterJoin(
+          categoryBudgetLimits,
+          categoryBudgetLimits.categoryFk.equalsExp(categories.categoryPk) &
+              categoryBudgetLimits.budgetFk.equals(budgetPk))
+    ])
+          ..groupBy([categories.categoryPk]))
+        .map((row) {
+      final TransactionCategory category = row.readTable(categories);
+      CategoryBudgetLimit? categoryBudgetLimit =
+          row.readTableOrNull(categoryBudgetLimits);
+      return CategoryWithTotal(
+        category: category,
+        categoryBudgetLimit: categoryBudgetLimit,
+        total: 0,
+        transactionCount: -1, // This indicates that it does not have this data
+      );
+    }).watch();
   }
 
   Future<bool> toggleAbsolutePercentSpendingCategoryBudgetLimits(

@@ -271,7 +271,8 @@ Future processMessageToParse(
   }
 }
 
-Future executeAppLink(BuildContext? context, Uri uri) async {
+Future executeAppLink(BuildContext? context, Uri uri,
+    {Function(dynamic)? onDebug}) async {
   if (appStateSettings["hasOnboarded"] != true) return;
 
   String endPoint = getApiEndpoint(uri);
@@ -292,7 +293,9 @@ Future executeAppLink(BuildContext? context, Uri uri) async {
               transactionObject.forEach((key, value) {
                 currentObject[key] = value.toString();
               });
-              await processAddTransactionFromParams(context, currentObject);
+              dynamic res =
+                  await processAddTransactionFromParams(context, currentObject);
+              if (onDebug != null) onDebug(res);
             }
           } catch (e) {
             openSnackbar(SnackbarMessage(
@@ -304,7 +307,8 @@ Future executeAppLink(BuildContext? context, Uri uri) async {
             ));
           }
         } else {
-          processAddTransactionFromParams(context, params);
+          dynamic res = await processAddTransactionFromParams(context, params);
+          if (onDebug != null) onDebug(res);
         }
       }
       break;
@@ -321,8 +325,9 @@ Future executeAppLink(BuildContext? context, Uri uri) async {
               transactionObject.forEach((key, value) {
                 currentObject[key] = value.toString();
               });
-              await processAddTransactionRouteFromParams(
+              dynamic res = await processAddTransactionRouteFromParams(
                   context, currentObject);
+              if (onDebug != null) onDebug(res);
             }
           } catch (e) {
             openSnackbar(SnackbarMessage(
@@ -334,7 +339,9 @@ Future executeAppLink(BuildContext? context, Uri uri) async {
             ));
           }
         } else {
-          processAddTransactionRouteFromParams(context, params);
+          dynamic res =
+              await processAddTransactionRouteFromParams(context, params);
+          if (onDebug != null) onDebug(res);
         }
       }
 
@@ -378,23 +385,60 @@ Future<MainAndSubcategory> getMainAndSubcategoryFromParams(
     Map<String, String?> params) async {
   MainAndSubcategory mainAndSubcategory = MainAndSubcategory();
 
+  // Handle case where a category AND subcategory is passed in
+  // Check for a main category, then find a subcategory in that main category
+  // else use default subcategory takes precedence behavior
+  if ((params.containsKey("category") || params.containsKey("categoryPk")) &&
+      (params.containsKey("subcategory") ||
+          params.containsKey("subcategoryPk"))) {
+    if (params.containsKey("categoryPk")) {
+      mainAndSubcategory.main = await database
+          .getCategoryInstanceOrNull(params["categoryPk"].toString());
+    }
+    if (mainAndSubcategory.main == null && params.containsKey("category")) {
+      mainAndSubcategory.main = await database.getRelatingCategory(
+        params["category"] ?? "",
+        onlySubCategories: false,
+      );
+    }
+    if (mainAndSubcategory.main != null) {
+      if (params.containsKey("subcategoryPk")) {
+        mainAndSubcategory.sub = await database
+            .getCategoryInstanceOrNull(params["subcategoryPk"].toString());
+        // Try again if the subcategories main category is not the same
+        if (mainAndSubcategory.sub?.mainCategoryPk !=
+            mainAndSubcategory.main?.categoryPk) {
+          mainAndSubcategory.sub = null;
+        }
+      }
+      if (mainAndSubcategory.sub == null && params.containsKey("subcategory")) {
+        mainAndSubcategory.sub = await database.getRelatingCategory(
+          params["subcategory"] ?? "",
+          onlySubCategories: true,
+          mainCategoryPkMustBe: mainAndSubcategory.main?.categoryPk,
+        );
+      }
+      // Return only if we found a subcategory (since this only runs with subcategory param)
+      if (mainAndSubcategory.sub != null) {
+        return mainAndSubcategory;
+      }
+    }
+  }
+
   // Subcategory takes precedence
-  TransactionCategory? subCategory;
   if (params.containsKey("subcategoryPk")) {
-    subCategory = await database
+    mainAndSubcategory.sub = await database
         .getCategoryInstanceOrNull(params["subcategoryPk"].toString());
   }
-  if (subCategory == null && params.containsKey("subcategory")) {
-    subCategory = await database.getRelatingCategory(
+  if (mainAndSubcategory.sub == null && params.containsKey("subcategory")) {
+    mainAndSubcategory.sub = await database.getRelatingCategory(
       params["subcategory"] ?? "",
       onlySubCategories: true,
-      limit: 1,
     );
   }
-  if (subCategory?.mainCategoryPk != null) {
+  if (mainAndSubcategory.sub?.mainCategoryPk != null) {
     mainAndSubcategory.main =
-        await database.getCategory(subCategory!.mainCategoryPk!).$2;
-    mainAndSubcategory.sub = subCategory;
+        await database.getCategory(mainAndSubcategory.sub!.mainCategoryPk!).$2;
     return mainAndSubcategory;
   }
 
@@ -406,7 +450,6 @@ Future<MainAndSubcategory> getMainAndSubcategoryFromParams(
     mainAndSubcategory.main = await database.getRelatingCategory(
       params["category"] ?? "",
       onlySubCategories: false,
-      limit: 1,
     );
   }
   if (mainAndSubcategory.main == null && params["title"] != null) {
@@ -426,10 +469,10 @@ Future<TransactionWallet?> getWalletFromParams(
         await database.getWalletInstanceOrNull(params["walletPk"].toString());
   }
   if (result == null && params.containsKey("account")) {
-    return await database.getRelatingWallet(params["account"] ?? "", limit: 1);
+    return await database.getRelatingWallet(params["account"] ?? "");
   }
   if (result == null && params.containsKey("wallet")) {
-    return await database.getRelatingWallet(params["wallet"] ?? "", limit: 1);
+    return await database.getRelatingWallet(params["wallet"] ?? "");
   }
   return result;
 }
