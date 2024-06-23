@@ -10,6 +10,7 @@ import 'package:budget/pages/pastBudgetsPage.dart';
 import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/defaultPreferences.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/animatedCircularProgress.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
@@ -594,6 +595,7 @@ class _ObjectivePageContentState extends State<_ObjectivePageContent> {
               TransactionEntries(
                 null,
                 null,
+                initialLoadLimit: 25,
                 listID: pageId,
                 dateDividerColor: pageBackgroundColor,
                 transactionBackgroundColor: pageBackgroundColor,
@@ -607,7 +609,7 @@ class _ObjectivePageContentState extends State<_ObjectivePageContent> {
                 showObjectivePercentage: false,
                 noResultsMessage: "no-transactions-found".tr() +
                     (widget.objective.type == ObjectiveType.loan
-                        ? "\n" + "add-record-using-plus-button"
+                        ? "\n" + "add-record-using-plus-button".tr()
                         : ""),
                 showNoResults: widget.objective.type == ObjectiveType.loan,
                 noResultsExtraWidget:
@@ -645,6 +647,10 @@ class _ObjectivePageContentState extends State<_ObjectivePageContent> {
                                 inverse: true),
                           )
                         : null,
+                renderType: appStateSettings["appAnimations"] !=
+                        AppAnimations.all.index
+                    ? TransactionEntriesRenderType.sliversNotSticky
+                    : TransactionEntriesRenderType.implicitlyAnimatedSlivers,
               ),
               // Wipe all remaining pixels off - sometimes graphics artifacts are left behind
               SliverToBoxAdapter(
