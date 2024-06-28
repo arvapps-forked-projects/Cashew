@@ -10,6 +10,7 @@ import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/util/checkWidgetLaunch.dart';
+import 'package:budget/widgets/util/keepAliveClientMixin.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
@@ -74,10 +75,8 @@ class _SelectColorState extends State<SelectColor> {
           index++;
         }
         print("color not found - must be custom color");
-        if (useSystemColor == false) {
-          selectedIndex = -1;
-          selectedColor = widget.selectedColor;
-        }
+        selectedIndex = -1;
+        selectedColor = widget.selectedColor;
       } else {
         selectedIndex = 0;
         selectedColor = null;
@@ -124,21 +123,23 @@ class _SelectColorState extends State<SelectColor> {
                       )
                     : widget.supportCustomColors &&
                             index + 1 == selectableColorsList.length
-                        ? ColorIconCustom(
-                            initialSelectedColor: selectedColor ??
-                                Theme.of(context).colorScheme.primary,
-                            outline: selectedIndex == -1 ||
-                                selectedIndex ==
-                                    selectableColorsList.length - 1,
-                            margin: EdgeInsetsDirectional.all(5),
-                            size: 55,
-                            onTap: (colorPassed) {
-                              widget.setSelectedColor!(colorPassed);
-                              setState(() {
-                                selectedColor = color;
-                                selectedIndex = index;
-                              });
-                            },
+                        ? KeepAliveClientMixin(
+                            child: ColorIconCustom(
+                              initialSelectedColor: selectedColor ??
+                                  Theme.of(context).colorScheme.primary,
+                              outline: selectedIndex == -1 ||
+                                  selectedIndex ==
+                                      selectableColorsList.length - 1,
+                              margin: EdgeInsetsDirectional.all(5),
+                              size: 55,
+                              onTap: (colorPassed) {
+                                widget.setSelectedColor!(colorPassed);
+                                setState(() {
+                                  selectedColor = color;
+                                  selectedIndex = index;
+                                });
+                              },
+                            ),
                           )
                         : ColorIcon(
                             margin: EdgeInsetsDirectional.all(5),
@@ -219,28 +220,30 @@ class _SelectColorState extends State<SelectColor> {
                         index,
                         widget.supportCustomColors &&
                                 index + 1 == selectableColorsList.length
-                            ? ColorIconCustom(
-                                initialSelectedColor:
-                                    selectedColor ?? Colors.red,
-                                margin: EdgeInsetsDirectional.all(5),
-                                size: 55,
-                                onTap: (colorPassed) {
-                                  widget.setSelectedColor!(colorPassed);
-                                  setState(() {
-                                    selectedColor = color;
-                                    selectedIndex = index;
-                                  });
-                                  Future.delayed(Duration(milliseconds: 70),
-                                      () {
-                                    Navigator.pop(context);
-                                    if (widget.next != null) {
-                                      widget.next!();
-                                    }
-                                  });
-                                },
-                                outline: selectedIndex == -1 ||
-                                    selectedIndex ==
-                                        selectableColorsList.length - 1,
+                            ? KeepAliveClientMixin(
+                                child: ColorIconCustom(
+                                  initialSelectedColor: selectedColor ??
+                                      Theme.of(context).colorScheme.primary,
+                                  margin: EdgeInsetsDirectional.all(5),
+                                  size: 55,
+                                  onTap: (colorPassed) {
+                                    widget.setSelectedColor!(colorPassed);
+                                    setState(() {
+                                      selectedColor = color;
+                                      selectedIndex = index;
+                                    });
+                                    Future.delayed(Duration(milliseconds: 70),
+                                        () {
+                                      Navigator.pop(context);
+                                      if (widget.next != null) {
+                                        widget.next!();
+                                      }
+                                    });
+                                  },
+                                  outline: selectedIndex == -1 ||
+                                      selectedIndex ==
+                                          selectableColorsList.length - 1,
+                                ),
                               )
                             : ColorIcon(
                                 margin: EdgeInsetsDirectional.all(5),
@@ -414,6 +417,7 @@ class _ColorIconCustomState extends State<ColorIconCustom> {
     Widget colorPickerPopup = PopupFramework(
       title: "custom-color".tr(),
       outsideExtraWidget: IconButton(
+        tooltip: "enter-color-code".tr(),
         iconSize: 25,
         padding: EdgeInsetsDirectional.all(
             getPlatform() == PlatformOS.isIOS ? 15 : 20),
@@ -437,6 +441,7 @@ class _ColorIconCustomState extends State<ColorIconCustom> {
         children: [
           Center(
             child: ColorPicker(
+              initialColor: widget.initialSelectedColor,
               colorSliderPosition: colorSliderPosition,
               shadeSliderPosition: shadeSliderPosition,
               ringColor: getColor(context, "black"),
@@ -447,9 +452,7 @@ class _ColorIconCustomState extends State<ColorIconCustom> {
                 setState(() {
                   // only set selected color after a slider change, we want to keep the
                   // value of widget.initialSelectedColor for the hex picker
-                  if (colorSliderPosition != null) {
-                    selectedColor = color;
-                  }
+                  selectedColor = color;
                   colorSliderPosition = colorSliderPositionPassed;
                   shadeSliderPosition = shadeSliderPositionPassed;
                 });
@@ -570,7 +573,6 @@ class _HexColorPickerState extends State<HexColorPicker> {
 
   @override
   Widget build(BuildContext context) {
-    print(selectedColor);
     return SelectText(
       buttonLabel: "set-color".tr(),
       icon: appStateSettings["outlinedIcons"]
