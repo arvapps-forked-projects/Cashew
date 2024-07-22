@@ -851,7 +851,8 @@ class _BiometricsSettingToggleState extends State<BiometricsSettingToggle> {
                         // On iOS the notification app settings page also has
                         // the permission for biometrics
                         if (getPlatform() == PlatformOS.isIOS) {
-                          AppSettings.openNotificationSettings();
+                          AppSettings.openAppSettings(
+                              type: AppSettingsType.notification);
                         }
                       },
                     );
@@ -1743,4 +1744,58 @@ class PercentagePrecisionSetting extends StatelessWidget {
       },
     );
   }
+}
+
+void savingHapticFeedback() {
+  if (appStateSettings["savingHapticFeedback"] == true) {
+    HapticFeedback.lightImpact();
+  }
+}
+
+class FirstDayOfWeekSetting extends StatelessWidget {
+  const FirstDayOfWeekSetting({required this.updateHomePage, super.key});
+  final bool updateHomePage;
+  @override
+  Widget build(BuildContext context) {
+    return SettingsContainerDropdown(
+      title: "first-weekday".tr(),
+      icon: appStateSettings["outlinedIcons"]
+          ? Icons.calendar_month_outlined
+          : Icons.calendar_month_rounded,
+      initial: appStateSettings["firstDayOfWeek"].toString(),
+      items: ["-1", "0", "1"],
+      onChanged: (value) async {
+        int intValue = int.tryParse(value) ?? -1;
+        await updateSettings(
+          "firstDayOfWeek",
+          intValue,
+          updateGlobalState: false,
+          pagesNeedingRefresh: updateHomePage ? [0] : [],
+        );
+      },
+      getLabel: (item) {
+        List<String> weekDayNames = getWeekdayNames();
+        if (item == "-1") return "default".tr();
+        if (item == "0") return weekDayNames[0];
+        if (item == "1") return weekDayNames[1];
+      },
+    );
+  }
+}
+
+List<String> getWeekdayNames() {
+  List<String> localizedWeekdayNames = [];
+  final String? locale = navigatorKey.currentContext?.locale.toString();
+
+  // Use a fixed date that is not affected by daylight saving time.
+  // December 31st, 2023, is a Sunday
+  final DateTime baseDate = DateTime.utc(2023, 12, 31, 12, 0, 0);
+
+  for (int i = 0; i < 7; i++) {
+    final DateTime date = baseDate.add(Duration(days: i));
+    final String weekdayName = DateFormat.EEEE(locale).format(date);
+    localizedWeekdayNames.add(weekdayName);
+  }
+
+  return localizedWeekdayNames;
 }

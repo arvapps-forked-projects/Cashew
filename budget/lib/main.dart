@@ -5,6 +5,7 @@ import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/struct/defaultPreferences.dart';
 import 'package:budget/struct/iconObjects.dart';
 import 'package:budget/struct/keyboardIntents.dart';
+import 'package:budget/struct/quickActions.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
@@ -36,7 +37,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'firebase_options.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -61,7 +62,7 @@ void main() async {
       .decode(await rootBundle.loadString('assets/static/language-names.json'));
   await initializeSettings();
   tz.initializeTimeZones();
-  final String? locationName = await FlutterNativeTimezone.getLocalTimezone();
+  final String? locationName = await FlutterTimezone.getLocalTimezone();
   tz.setLocalLocation(tz.getLocation(locationName ?? "America/New_York"));
   iconObjects.sort((a, b) => (a.mostLikelyCategoryName ?? a.icon)
       .compareTo((b.mostLikelyCategoryName ?? b.icon)));

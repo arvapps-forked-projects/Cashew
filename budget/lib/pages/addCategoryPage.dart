@@ -5,6 +5,7 @@ import 'package:budget/pages/accountsPage.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/editAssociatedTitlesPage.dart';
 import 'package:budget/pages/editCategoriesPage.dart';
+import 'package:budget/pages/settingsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
@@ -174,6 +175,7 @@ class _AddCategoryPageState extends State<AddCategoryPage>
         ),
       );
     }
+    savingHapticFeedback();
     Navigator.pop(context);
   }
 
@@ -320,7 +322,7 @@ class _AddCategoryPageState extends State<AddCategoryPage>
                       : Icons.swap_vert_rounded,
                   enableBorderRadius: true,
                   title: "amount-color".tr(),
-                  initial: "green-or-red",
+                  initial: appStateSettings["balanceTransferAmountColor"],
                   items: ["green-or-red", "no-color"],
                   getLabel: (item) {
                     return item.tr();
