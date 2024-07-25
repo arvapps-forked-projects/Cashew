@@ -51,6 +51,7 @@ class PageFramework extends StatefulWidget {
     this.textColor,
     this.dragDownToDismiss = false,
     this.dragDownToDismissEnabled = true,
+    this.backSwipeToDismissEnabled = true,
     this.onBackButton,
     this.onDragDownToDismiss,
     this.actions,
@@ -72,6 +73,7 @@ class PageFramework extends StatefulWidget {
     this.bodyBuilder,
     this.scrollController,
     this.selectedTransactionsAppBar,
+    this.backButtonOpacity,
   }) : super(key: key);
 
   final String title;
@@ -96,6 +98,7 @@ class PageFramework extends StatefulWidget {
   final Color? textColor;
   final bool dragDownToDismiss;
   final bool dragDownToDismissEnabled;
+  final bool backSwipeToDismissEnabled;
   final VoidCallback? onBackButton;
   final VoidCallback? onDragDownToDismiss;
   final List<Widget>? actions;
@@ -121,6 +124,7 @@ class PageFramework extends StatefulWidget {
       ScrollPhysics? scrollPhysics, Widget sliverAppBar)? bodyBuilder;
   final ScrollController? scrollController;
   final Widget? selectedTransactionsAppBar;
+  final double? backButtonOpacity;
 
   @override
   State<PageFramework> createState() => PageFrameworkState();
@@ -128,9 +132,10 @@ class PageFramework extends StatefulWidget {
 
 class PageFrameworkState extends State<PageFramework>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  final double leftBackSwipeDetectionWidth = 50;
+  final double leftBackSwipeDetectionWidth = 30;
 
-  late ScrollController _scrollController;
+  late ScrollController _scrollController =
+      widget.scrollController ?? ScrollController();
   late AnimationController _animationControllerShift =
       AnimationController(vsync: this);
   late AnimationController _animationControllerOpacity;
@@ -143,20 +148,31 @@ class PageFrameworkState extends State<PageFramework>
 
   final double scrollingLimit = 50000;
 
-  double getDistanceToBottom() {
-    final double currentScrollPosition = _scrollController.position.pixels;
-    final double maxScrollExtent = _scrollController.position.maxScrollExtent;
-    final double distanceToEnd = maxScrollExtent - currentScrollPosition;
-    return distanceToEnd;
+  double? getDistanceToBottom() {
+    try {
+      if (_scrollController.hasClients == false) return 0;
+      final double currentScrollPosition = _scrollController.position.pixels;
+      final double maxScrollExtent = _scrollController.position.maxScrollExtent;
+      final double distanceToEnd = maxScrollExtent - currentScrollPosition;
+      return distanceToEnd;
+    } catch (e) {
+      return null;
+    }
   }
 
-  double getDistanceToTop() {
-    final double currentScrollPosition = _scrollController.position.pixels;
-    return currentScrollPosition;
+  double? getDistanceToTop() {
+    try {
+      final double currentScrollPosition = _scrollController.position.pixels;
+      return currentScrollPosition;
+    } catch (e) {
+      return null;
+    }
   }
 
   void scrollToTop({int duration = 1200}) {
-    if (getDistanceToTop() > scrollingLimit || duration == 0) {
+    if (getDistanceToTop() == null ||
+        (getDistanceToTop() ?? 0) > scrollingLimit ||
+        duration == 0) {
       _scrollController.jumpTo(0);
       print("Scrolling via jump, list too long!");
     } else {
@@ -173,7 +189,9 @@ class PageFrameworkState extends State<PageFramework>
   }
 
   void scrollToBottom({int duration = 1200}) {
-    if (getDistanceToBottom() > scrollingLimit || duration == 0) {
+    if (getDistanceToBottom() == null ||
+        (getDistanceToBottom() ?? 0) > scrollingLimit ||
+        duration == 0) {
       _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       print("Scrolling via jump, list too long!");
     } else {
@@ -208,7 +226,6 @@ class PageFrameworkState extends State<PageFramework>
     _animationControllerOpacity = AnimationController(vsync: this, value: 0.5);
     _animationControllerDragY = AnimationController(vsync: this, value: 0);
     _animationControllerDragY.duration = Duration(milliseconds: 1000);
-    _scrollController = widget.scrollController ?? ScrollController();
     _scrollController.addListener(_scrollListener);
 
     WidgetsBinding.instance.addObserver(this);
@@ -247,17 +264,20 @@ class PageFrameworkState extends State<PageFramework>
       if (percent < 0) offset = 0;
 
       if (getExpandedHeaderHeight(context, widget.expandedHeight) - 56 == 0) {
-        _animationControllerOpacity.value = 0.5 +
-            (offset /
-                (getExpandedHeaderHeight(context, widget.expandedHeight)) /
-                2);
+        _animationControllerOpacity.value = widget.backButtonOpacity ??
+            (0.5 +
+                (offset /
+                    (getExpandedHeaderHeight(context, widget.expandedHeight)) /
+                    2));
         _animationControllerShift.value = (offset /
             (getExpandedHeaderHeight(context, widget.expandedHeight)));
       } else {
-        _animationControllerOpacity.value = 0.5 +
-            (offset /
-                (getExpandedHeaderHeight(context, widget.expandedHeight) - 56) /
-                2);
+        _animationControllerOpacity.value = widget.backButtonOpacity ??
+            (0.5 +
+                (offset /
+                    (getExpandedHeaderHeight(context, widget.expandedHeight) -
+                        56) /
+                    2));
         _animationControllerShift.value = (offset /
             (getExpandedHeaderHeight(context, widget.expandedHeight) - 56));
       }
@@ -295,9 +315,9 @@ class PageFrameworkState extends State<PageFramework>
   _onPointerMove(PointerMoveEvent ptr) {
     if ((widget.onDragDownToDismiss != null ||
             Navigator.of(context).canPop()) &&
-        widget.dragDownToDismissEnabled &&
+        (widget.dragDownToDismissEnabled || widget.backSwipeToDismissEnabled) &&
         selectingTransactionsActive == 0) {
-      if (isBackSideSwiping) {
+      if (isBackSideSwiping && widget.backSwipeToDismissEnabled) {
         totalDragX = totalDragX + ptr.delta.dx;
         calculatedYOffsetForX = totalDragX / 500;
 
@@ -306,7 +326,7 @@ class PageFrameworkState extends State<PageFramework>
           isSwipingToDismissPageDown.notifyListeners();
         }
       }
-      if (swipeDownToDismiss) {
+      if (swipeDownToDismiss && widget.dragDownToDismissEnabled) {
         totalDragY = totalDragY + ptr.delta.dy;
         calculatedYOffsetForY = totalDragY / 500;
 
@@ -322,7 +342,7 @@ class PageFrameworkState extends State<PageFramework>
 
   _onPointerUp(PointerUpEvent event) async {
     //How far you need to drag to dismiss
-    if (widget.dragDownToDismissEnabled) {
+    if (widget.dragDownToDismissEnabled || widget.backSwipeToDismissEnabled) {
       if ((totalDragX >= 90 || totalDragY >= 125) &&
           !(ModalRoute.of(context)?.isFirst ?? true)) {
         // HapticFeedback.lightImpact();
@@ -560,7 +580,8 @@ class PageFrameworkState extends State<PageFramework>
       animation: _scrollToTopAnimationController,
       builder: (_, child) {
         // Don't show scroll to bottom button if list is way too long!
-        if (getDistanceToBottom() > scrollingLimit) {
+        if (getDistanceToBottom() == null ||
+            (getDistanceToBottom() ?? 0) > scrollingLimit) {
           return scrollToTopButton;
         }
         return IgnorePointer(
@@ -861,7 +882,8 @@ class PageFrameworkSliverAppBar extends StatelessWidget {
           titlePadding:
               EdgeInsetsDirectional.symmetric(vertical: 15, horizontal: 18),
           title: MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(1.0)),
             child: Transform.translate(
               offset: centeredTitleWithDefault
                   ? Offset(
@@ -989,7 +1011,7 @@ Color calculateAppBarBGColor({
       : appBarBackgroundColor;
   if (centeredTitleSmall && getPlatform() == PlatformOS.isIOS) {
     appBarBGColorCalculated =
-        appBarBackgroundColor ?? Theme.of(context).canvasColor;
+        appBarBackgroundColor ?? Theme.of(context).colorScheme.background;
   }
   return appBarBGColorCalculated;
 }
@@ -1013,7 +1035,7 @@ List<Widget> getAppBarBackgroundColorLayers({
   );
   return [
     Container(
-      color: appBarBackgroundColor ?? Theme.of(context).canvasColor,
+      color: appBarBackgroundColor ?? Theme.of(context).colorScheme.background,
       // Fixes backdrop not fading correctly when using Impeller (iOS - Flutter v3.13)
       width: MediaQuery.sizeOf(context).width,
       height: MediaQuery.sizeOf(context).height - 1,
@@ -1026,7 +1048,7 @@ List<Widget> getAppBarBackgroundColorLayers({
             height: MediaQuery.sizeOf(context).height - 1,
 
             color: appBarBackgroundColorStart == null
-                ? Theme.of(context).canvasColor
+                ? Theme.of(context).colorScheme.background
                 : appBarBackgroundColorStart,
           ),
     (animationControllerOpacity != null || percent != null) &&
@@ -1084,8 +1106,11 @@ List<Widget> getAppBarBackgroundColorLayers({
                       animation: animationControllerOpacity,
                       builder: (_, child) {
                         return Opacity(
-                          opacity:
-                              (animationControllerOpacity.value - 0.5) / 0.5,
+                          opacity: clampDouble(
+                            (animationControllerOpacity.value - 0.5) / 0.5,
+                            0,
+                            1,
+                          ),
                           child: child,
                         );
                       },

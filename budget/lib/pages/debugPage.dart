@@ -180,6 +180,17 @@ class DebugPage extends StatelessWidget {
               : Icons.live_help_rounded,
         ),
         SettingsContainerSwitch(
+          title: "Show extra info text".tr(),
+          onSwitched: (value) {
+            updateSettings("showExtraInfoText", value,
+                updateGlobalState: false, pagesNeedingRefresh: [3]);
+          },
+          initialValue: appStateSettings["showExtraInfoText"] == true,
+          icon: appStateSettings["outlinedIcons"]
+              ? Icons.info_outline
+              : Icons.info_rounded,
+        ),
+        SettingsContainerSwitch(
           title: "battery-saver".tr(),
           description: "battery-saver-description".tr(),
           onSwitched: (value) {
@@ -640,7 +651,9 @@ class DebugPage extends StatelessWidget {
         ColorBox(color: Theme.of(context).colorScheme.surface, name: "surface"),
         ColorBox(
             color: Theme.of(context).colorScheme.onSurface, name: "onSurface"),
-        ColorBox(color: Theme.of(context).canvasColor, name: "background"),
+        ColorBox(
+            color: Theme.of(context).colorScheme.background,
+            name: "background"),
         ColorBox(
             color: Theme.of(context).colorScheme.onBackground,
             name: "onBackground"),
