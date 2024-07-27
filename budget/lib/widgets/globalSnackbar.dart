@@ -74,7 +74,7 @@ class GlobalSnackbarState extends State<GlobalSnackbar>
     }
     if (currentQueue.length >= 1) {
       Future.delayed(Duration(milliseconds: 150), () {
-        animateIn(currentQueue[0]);
+        if (currentQueue.length >= 1) animateIn(currentQueue[0]);
       });
     }
   }
@@ -224,7 +224,7 @@ class GlobalSnackbarState extends State<GlobalSnackbar>
                                       text: currentMessage?.title ?? "",
                                       textAlign: currentMessage?.icon == null
                                           ? TextAlign.center
-                                          : TextAlign.left,
+                                          : TextAlign.start,
                                       fontSize: 15,
                                       maxLines: 3,
                                     ),
@@ -237,7 +237,7 @@ class GlobalSnackbarState extends State<GlobalSnackbar>
                                             textAlign:
                                                 currentMessage?.icon == null
                                                     ? TextAlign.center
-                                                    : TextAlign.left,
+                                                    : TextAlign.start,
                                             fontSize: 13,
                                           ),
                                   ],
