@@ -23,7 +23,7 @@ import 'package:budget/widgets/ratingPopup.dart';
 import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/textInput.dart';
 import 'package:budget/widgets/textWidgets.dart';
-import 'package:budget/widgets/util/deepLinks.dart';
+import 'package:budget/widgets/util/appLinks.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -398,10 +398,12 @@ class DebugPage extends StatelessWidget {
           icon: Icons.dark_mode,
         ),
         SettingsContainerSwitch(
-          title: "Show Transaction ID",
-          description: "On transactions page",
+          title: "Show Extra Transaction Info",
+          description:
+              "Show the transaction ID and method added in the transactions page",
           onSwitched: (value) {
-            updateSettings("showTransactionPk", value, updateGlobalState: true);
+            updateSettings("showTransactionPk", value,
+                updateGlobalState: false);
           },
           initialValue: appStateSettings["showTransactionPk"] == true,
           icon: Icons.password,

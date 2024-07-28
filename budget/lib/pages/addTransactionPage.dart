@@ -1673,12 +1673,27 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                 Padding(
                   padding: const EdgeInsetsDirectional.only(
                       start: 10, end: 10, top: 10),
-                  child: TextFont(
-                    text: widget.transaction?.transactionPk ?? "",
-                    fontSize: 13,
-                    textColor: getColor(context, "textLight"),
-                    textAlign: TextAlign.center,
-                    maxLines: 4,
+                  child: Column(
+                    children: [
+                      TextFont(
+                        text: "Added via: " +
+                            (widget.transaction?.methodAdded?.name
+                                    .toString()
+                                    .capitalizeFirstofEach ??
+                                ""),
+                        fontSize: 13,
+                        textColor: getColor(context, "textLight"),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                      ),
+                      TextFont(
+                        text: widget.transaction?.transactionPk ?? "",
+                        fontSize: 13,
+                        textColor: getColor(context, "textLight"),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                      ),
+                    ],
                   ),
                 ),
 
@@ -1886,21 +1901,9 @@ class _AddTransactionPageState extends State<AddTransactionPage>
                       type: ContextMenuButtonType.paste,
                       onPressed: () async {
                         ContextMenuController.removeAny();
-                        String? clipboardText =
-                            await readClipboard(showSnackbar: false);
-                        double? amount =
-                            getAmountFromString(clipboardText ?? "");
+                        double? amount = await readAmountFromClipboard();
                         if (amount != null) {
                           setSelectedAmount(amount, amount.toString());
-                          openSnackbar(
-                            SnackbarMessage(
-                              title: "pasted-from-clipboard".tr(),
-                              icon: appStateSettings["outlinedIcons"]
-                                  ? Icons.paste_outlined
-                                  : Icons.paste_rounded,
-                              timeout: Duration(milliseconds: 2500),
-                            ),
-                          );
                         }
                       },
                     ),
