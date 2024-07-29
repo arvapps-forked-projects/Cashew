@@ -1,10 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
-
 import 'package:budget/functions.dart';
-import 'package:budget/main.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/struct/shareBudget.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
@@ -15,9 +12,7 @@ import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/transactionEntry/swipeToSelectTransactions.dart';
 import 'package:flutter/material.dart';
 import 'package:budget/colors.dart';
-import 'package:flutter/services.dart';
-
-import '../pullDownToRefreshSync.dart';
+import 'package:budget/widgets/pullDownToRefreshSync.dart';
 
 ValueNotifier<bool> isSwipingToDismissPageDown = ValueNotifier<bool>(false);
 ValueNotifier<bool> callRefreshToPages = ValueNotifier<bool>(false);
@@ -75,6 +70,7 @@ class PageFramework extends StatefulWidget {
     this.selectedTransactionsAppBar,
     this.backButtonOpacity,
     this.forceBackgroundColors = false,
+    this.scrollbar = true,
   }) : super(key: key);
 
   final String title;
@@ -127,6 +123,7 @@ class PageFramework extends StatefulWidget {
   final Widget? selectedTransactionsAppBar;
   final double? backButtonOpacity;
   final bool forceBackgroundColors;
+  final bool scrollbar;
 
   @override
   State<PageFramework> createState() => PageFrameworkState();
@@ -465,6 +462,7 @@ class PageFrameworkState extends State<PageFramework>
           : Stack(
               children: [
                 ScrollbarWrap(
+                  enabled: widget.scrollbar,
                   child: widget.customScrollViewBuilder != null
                       ? widget.customScrollViewBuilder!(
                           _scrollController,

@@ -4,10 +4,8 @@ import 'package:budget/pages/addBudgetPage.dart';
 import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/creditDebtTransactionsPage.dart';
-import 'package:budget/pages/editHomePage.dart';
 import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/homePage/homePageNetWorth.dart';
-import 'package:budget/pages/homePage/homePageWalletSwitcher.dart';
 import 'package:budget/pages/pastBudgetsPage.dart';
 import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
@@ -21,8 +19,6 @@ import 'package:budget/widgets/budgetHistoryLineGraph.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/countNumber.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
-import 'package:budget/widgets/editRowEntry.dart';
-import 'package:budget/widgets/extraInfoBoxes.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
 import 'package:budget/widgets/iconButtonScaled.dart';
 import 'package:budget/widgets/incomeExpenseTabSelector.dart';
@@ -31,42 +27,33 @@ import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openContainerNavigation.dart';
 import 'package:budget/widgets/openPopup.dart';
-import 'package:budget/widgets/outlinedButtonStacked.dart';
 import 'package:budget/widgets/periodCyclePicker.dart';
-import 'package:budget/widgets/radioItems.dart';
 import 'package:budget/widgets/scrollbarWrap.dart';
-import 'package:budget/widgets/selectAmount.dart';
 import 'package:budget/widgets/selectedTransactionsAppBar.dart';
 import 'package:budget/widgets/categoryEntry.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
 import 'package:budget/widgets/pieChart.dart';
 import 'package:budget/widgets/settingsContainers.dart';
 import 'package:budget/widgets/tappable.dart';
-import 'package:budget/widgets/tappableTextEntry.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:budget/widgets/transactionEntries.dart';
 import 'package:budget/widgets/transactionEntry/incomeAmountArrow.dart';
-import 'package:budget/widgets/transactionEntry/swipeToSelectTransactions.dart';
 import 'package:budget/widgets/transactionEntry/transactionEntry.dart';
 import 'package:budget/widgets/transactionsAmountBox.dart';
-import 'package:budget/widgets/util/keepAliveClientMixin.dart';
-import 'package:budget/widgets/util/showDatePicker.dart';
 import 'package:budget/widgets/util/sliverPinnedOverlapInjector.dart';
 import 'package:budget/widgets/util/widgetSize.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:budget/colors.dart';
 import 'package:budget/widgets/viewAllTransactionsButton.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
-import 'package:implicitly_animated_reorderable_list/transitions.dart';
 import 'package:provider/provider.dart';
 import 'package:budget/widgets/fab.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:async/async.dart' show StreamZip;
 import 'package:sliver_tools/sliver_tools.dart';
-import 'package:budget/widgets/util/rightSideClipper.dart';
+import 'package:budget/widgets/util/fullPageDoubleColumnLayout.dart';
 
 // Also known as the all spending page
 
@@ -1258,6 +1245,9 @@ class WalletDetailsPageState extends State<WalletDetailsPage>
             enableDoubleColumn(context) == true && widget.wallet == null
                 ? Theme.of(context).colorScheme.secondaryContainer
                 : null,
+        dragDownToDismiss: true,
+        dragDownToDismissEnabled: enableDoubleColumn(context) ? false : true,
+        expandedHeight: enableDoubleColumn(context) ? 56 : null,
         backgroundColor: Theme.of(context).colorScheme.background,
         scrollController: _scrollController,
         key: pageState,
@@ -1367,108 +1357,60 @@ class WalletDetailsPageState extends State<WalletDetailsPage>
                     ),
                   ),
               ],
-        dragDownToDismiss: true,
-        dragDownToDismissEnabled: enableDoubleColumn(context) ? false : true,
-        expandedHeight: enableDoubleColumn(context) ? 56 : null,
         bodyBuilder: (scrollController, scrollPhysics, sliverAppBar) {
           if (widget.wallet == null && enableDoubleColumn(context)) {
-            double heightOfBanner = 56;
-            double topPaddingOfBanner = MediaQuery.viewPaddingOf(context).top;
-            double totalHeaderHeight = heightOfBanner + topPaddingOfBanner;
-            return Column(
-              children: [
-                Container(
-                  height: totalHeaderHeight,
-                  decoration: BoxDecoration(
-                      boxShadow: boxShadowCheck(boxShadowSharp(context))),
-                  child: CustomScrollView(
-                    slivers: [sliverAppBar],
-                  ),
-                ),
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 1800),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: MediaQuery.sizeOf(context).height -
-                              totalHeaderHeight,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Flexible(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(maxWidth: 700),
-                                  child: ScrollbarWrap(
-                                    child: CustomScrollView(
-                                      controller: _scrollController,
-                                      slivers: [
-                                        SliverToBoxAdapter(
-                                            child: SizedBox(height: 20)),
-                                        SliverToBoxAdapter(
-                                          child: Padding(
-                                            padding: const EdgeInsetsDirectional
-                                                .symmetric(horizontal: 13),
-                                            child: Stack(
-                                              alignment:
-                                                  AlignmentDirectional.center,
-                                              children: [
-                                                selectedTabCurrent,
-                                                selectedTabPeriodSelected(
-                                                  () {
-                                                    selectAllSpendingPeriod(
-                                                        onlyShowCycleOption:
-                                                            false);
-                                                  },
-                                                ),
-                                                PositionedDirectional(
-                                                  end: 0,
-                                                  child:
-                                                      clearSelectedPeriodButton,
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        SliverToBoxAdapter(
-                                          child: appliedFilterChipsWidget,
-                                        ),
-                                        ...currentTabPage,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Flexible(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(maxWidth: 700),
-                                  child: ScrollbarWrap(
-                                    child: CustomScrollView(
-                                      slivers: [
-                                        SliverToBoxAdapter(
-                                            child: SizedBox(height: 20)),
-                                        SliverToBoxAdapter(
-                                          child: Padding(
-                                            padding: const EdgeInsetsDirectional
-                                                .symmetric(horizontal: 13),
-                                            child: selectedTabHistory,
-                                          ),
-                                        ),
-                                        ...historyTabPage,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+            return FullPageDoubleColumnLayout(
+              heightOfBanner: 56,
+              sliverAppBar: sliverAppBar,
+              leftWidget: ScrollbarWrap(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverToBoxAdapter(child: SizedBox(height: 20)),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: 13),
+                        child: Stack(
+                          alignment: AlignmentDirectional.center,
+                          children: [
+                            selectedTabCurrent,
+                            selectedTabPeriodSelected(
+                              () {
+                                selectAllSpendingPeriod(
+                                    onlyShowCycleOption: false);
+                              },
+                            ),
+                            PositionedDirectional(
+                              end: 0,
+                              child: clearSelectedPeriodButton,
+                            )
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: appliedFilterChipsWidget,
+                    ),
+                    ...currentTabPage,
+                  ],
                 ),
-              ],
+              ),
+              rightWidget: ScrollbarWrap(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(child: SizedBox(height: 20)),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.symmetric(
+                            horizontal: 13),
+                        child: selectedTabHistory,
+                      ),
+                    ),
+                    ...historyTabPage,
+                  ],
+                ),
+              ),
             );
           }
           return Stack(
