@@ -198,9 +198,7 @@ class UpcomingTransactionDateHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int daysDifference =
-        DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
-            .difference(transaction.dateCreated)
-            .inDays;
+        DateTime.now().justDay().difference(transaction.dateCreated).inDays;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -394,6 +392,7 @@ class TotalUpcomingHeaderPeriodSwitcher extends StatelessWidget {
           Padding(
             padding: EdgeInsetsDirectional.only(top: 5),
             child: AnimatedSizeSwitcher(
+              clipBehavior: Clip.none,
               child: TextFont(
                 key: ValueKey(selectedType.toString()),
                 text: selectedSubtitleTranslation(selectedType),

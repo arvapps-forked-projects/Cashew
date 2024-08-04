@@ -1,5 +1,6 @@
 import 'package:budget/colors.dart';
 import 'package:budget/database/tables.dart';
+import 'package:budget/functions.dart';
 import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
@@ -141,6 +142,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "canShowBackupReminderPopup": true,
     "canShowTransactionActionButtonTip": true,
     "autoLoginDisabledOnWebTip": true,
+    "forceAutoLogin": false,
     "allSpendingPageTip": true,
     "notifications": true,
     "notificationHour": 20,
@@ -233,10 +235,8 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "selectedPeriodCycleType": CycleType.allTime.index,
     "cyclePeriodLength": 1,
     "cycleReoccurrence": BudgetReoccurence.monthly.index,
-    "cycleStartDate":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
-    "customPeriodStartDate":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    "cycleStartDate": DateTime.now().firstDayOfMonth().toString(),
+    "customPeriodStartDate": DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDate": null,
     "customPeriodPastDays": 30,
     // For showing information within a certain cycle for pie chart
@@ -244,10 +244,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "selectedPeriodCycleTypePieChart": CycleType.allTime.index,
     "cyclePeriodLengthPieChart": 1,
     "cycleReoccurrencePieChart": BudgetReoccurence.monthly.index,
-    "cycleStartDatePieChart":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    "cycleStartDatePieChart": DateTime.now().firstDayOfMonth().toString(),
     "customPeriodStartDatePieChart":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDatePieChart": null,
     "customPeriodPastDaysPieChart": 30,
     // For showing information within a certain cycle for net worth
@@ -255,10 +254,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "selectedPeriodCycleTypeNetWorth": CycleType.allTime.index,
     "cyclePeriodLengthNetWorth": 1,
     "cycleReoccurrenceNetWorth": BudgetReoccurence.monthly.index,
-    "cycleStartDateNetWorth":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    "cycleStartDateNetWorth": DateTime.now().firstDayOfMonth().toString(),
     "customPeriodStartDateNetWorth":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDateNetWorth": null,
     "customPeriodPastDaysNetWorth": 30,
     // For showing information within a certain cycle for income and expenses (allSpendingSummary)
@@ -267,9 +265,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "cyclePeriodLengthAllSpendingSummary": 1,
     "cycleReoccurrenceAllSpendingSummary": BudgetReoccurence.monthly.index,
     "cycleStartDateAllSpendingSummary":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodStartDateAllSpendingSummary":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDateAllSpendingSummary": null,
     "customPeriodPastDaysAllSpendingSummary": 30,
     // For showing information within a certain cycle for overdue and upcoming (overdueUpcoming)
@@ -278,9 +276,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "cyclePeriodLengthOverdueUpcoming": 1,
     "cycleReoccurrenceOverdueUpcoming": BudgetReoccurence.monthly.index,
     "cycleStartDateOverdueUpcoming":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodStartDateOverdueUpcoming":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDateOverdueUpcoming": null,
     "customPeriodPastDaysOverdueUpcoming": 30,
     // For showing information within a certain cycle for credits and debts (loans) (creditDebts)
@@ -288,10 +286,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "selectedPeriodCycleTypeCreditDebts": CycleType.allTime.index,
     "cyclePeriodLengthCreditDebts": 1,
     "cycleReoccurrenceCreditDebts": BudgetReoccurence.monthly.index,
-    "cycleStartDateCreditDebts":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    "cycleStartDateCreditDebts": DateTime.now().firstDayOfMonth().toString(),
     "customPeriodStartDateCreditDebts":
-        DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+        DateTime.now().firstDayOfMonth().toString(),
     "customPeriodEndDateCreditDebts": null,
     "customPeriodPastDaysCreditDebts": 30,
     // // For showing information within a certain cycle for wallets homepage section
@@ -300,9 +297,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     // "cyclePeriodLengthWallets": 1,
     // "cycleReoccurrenceWallets": BudgetReoccurence.monthly.index,
     // "cycleStartDateWallets":
-    //     DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    //     DateTime.now().firstDayOfMonth().toString(),
     // "customPeriodStartDateWallets":
-    //     DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    //     DateTime.now().firstDayOfMonth().toString(),
     // "customPeriodEndDateWallets": null,
     // "customPeriodPastDaysWallets": 30,
     // // For showing information within a certain cycle for walletsList homepage section
@@ -311,9 +308,9 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     // "cyclePeriodLengthWalletsList": 1,
     // "cycleReoccurrenceWalletsList": BudgetReoccurence.monthly.index,
     // "cycleStartDateWalletsList":
-    //     DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    //     DateTime.now().firstDayOfMonth().toString(),
     // "customPeriodStartDateWalletsList":
-    //     DateTime(DateTime.now().year, DateTime.now().month, 1).toString(),
+    //     DateTime.now().firstDayOfMonth().toString(),
     // "customPeriodEndDateWalletsList": null,
     // "customPeriodPastDaysWalletsList": 30,
     // *********************************************************** //

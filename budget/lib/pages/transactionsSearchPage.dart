@@ -45,6 +45,7 @@ class TransactionsSearchPageState extends State<TransactionsSearchPage>
   late AnimationController _animationControllerSearch;
   final _debouncer = Debouncer(milliseconds: 500);
   late SearchFilters searchFilters;
+  TextEditingController searchInputController = new TextEditingController();
 
   @override
   void initState() {
@@ -61,6 +62,12 @@ class TransactionsSearchPageState extends State<TransactionsSearchPage>
 
     _animationControllerSearch = AnimationController(vsync: this, value: 1);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    searchInputController.dispose();
+    super.dispose();
   }
 
   _scrollListener(position) {
@@ -100,11 +107,24 @@ class TransactionsSearchPageState extends State<TransactionsSearchPage>
   void clearSearchFilters() {
     // Don't change the DateTime selected, as its handles separately
     DateTimeRange? dateTimeRange = searchFilters.dateTimeRange;
-    // Don't change the search query, as its handled by the text box
-    String? searchQuery = searchFilters.searchQuery;
+    // Only clear the search query if there are special filters
+    // identified within the search query
+    String? savedSearchQuery;
+    ParsedDateTimeQuery? parsedDateTimeQuery = searchFilters.searchQuery == null
+        ? null
+        : parseSearchQueryForDateTimeText(searchFilters.searchQuery ?? "");
+    (double, double)? bounds = searchFilters.searchQuery == null
+        ? null
+        : parseSearchQueryForAmountText(searchFilters.searchQuery ?? "");
+    if (parsedDateTimeQuery != null || bounds != null) {
+      savedSearchQuery = null;
+      setTextInput(searchInputController, "");
+    } else {
+      savedSearchQuery = searchFilters.searchQuery;
+    }
     searchFilters.clearSearchFilters();
     searchFilters.dateTimeRange = dateTimeRange;
-    searchFilters.searchQuery = searchQuery;
+    searchFilters.searchQuery = savedSearchQuery;
     updateSettings("searchTransactionsSetFiltersString", null,
         updateGlobalState: false);
     setState(() {});
@@ -121,14 +141,17 @@ class TransactionsSearchPageState extends State<TransactionsSearchPage>
       allTimeButton: true,
     );
     if (picked != null) {
-      setState(() {
-        searchFilters.dateTimeRange = picked.dateTimeRange;
-      });
-      updateSettings(
-        "searchTransactionsSetFiltersString",
-        searchFilters.getFilterString(),
-        updateGlobalState: false,
-      );
+      if (searchFilters.dateTimeRange != picked.dateTimeRange)
+        Future.delayed(Duration(milliseconds: 175), () {
+          setState(() {
+            searchFilters.dateTimeRange = picked.dateTimeRange;
+          });
+          updateSettings(
+            "searchTransactionsSetFiltersString",
+            searchFilters.getFilterString(),
+            updateGlobalState: false,
+          );
+        });
     }
   }
 
@@ -178,6 +201,7 @@ class TransactionsSearchPageState extends State<TransactionsSearchPage>
                     SizedBox(width: 20),
                     Expanded(
                       child: TextInput(
+                        controller: searchInputController,
                         autoFocus: true,
                         labelText: "search-placeholder".tr(),
                         icon: appStateSettings["outlinedIcons"]
@@ -200,26 +224,31 @@ class TransactionsSearchPageState extends State<TransactionsSearchPage>
                       ),
                     ),
                     SizedBox(width: 7),
-                    AnimatedSwitcher(
-                      duration: Duration(milliseconds: 500),
-                      child: ButtonIcon(
-                        key: ValueKey(
-                          (searchFilters.dateTimeRange == null).toString(),
+                    Builder(builder: (context) {
+                      // Wrap in a builder to prevent entire page from reloading with popup
+                      return AnimatedSwitcher(
+                        duration: Duration(milliseconds: 500),
+                        child: ButtonIcon(
+                          key: ValueKey(
+                            (searchFilters.dateTimeRange == null).toString(),
+                          ),
+                          color: searchFilters.dateTimeRange == null
+                              ? null
+                              : Theme.of(context).colorScheme.tertiaryContainer,
+                          iconColor: searchFilters.dateTimeRange == null
+                              ? null
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onTertiaryContainer,
+                          onTap: () {
+                            selectDateRange(context);
+                          },
+                          icon: appStateSettings["outlinedIcons"]
+                              ? Icons.calendar_month_outlined
+                              : Icons.calendar_month_rounded,
                         ),
-                        color: searchFilters.dateTimeRange == null
-                            ? null
-                            : Theme.of(context).colorScheme.tertiaryContainer,
-                        iconColor: searchFilters.dateTimeRange == null
-                            ? null
-                            : Theme.of(context).colorScheme.onTertiaryContainer,
-                        onTap: () {
-                          selectDateRange(context);
-                        },
-                        icon: appStateSettings["outlinedIcons"]
-                            ? Icons.calendar_month_outlined
-                            : Icons.calendar_month_rounded,
-                      ),
-                    ),
+                      );
+                    }),
                     SizedBox(width: 7),
                     AnimatedSwitcher(
                       duration: Duration(milliseconds: 500),
@@ -376,8 +405,9 @@ class AppliedFilterChip extends StatelessWidget {
           openFiltersSelection();
         },
         borderRadius: 8,
-        color:
-            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5),
+        color: (appStateSettings["materialYou"]
+            ? Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.5)
+            : null),
         child: Container(
           padding:
               EdgeInsetsDirectional.only(start: 14, end: 14, top: 7, bottom: 7),

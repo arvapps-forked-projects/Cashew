@@ -26,6 +26,7 @@ import 'package:budget/pages/activityPage.dart';
 Map<String, dynamic> appStateSettings = {};
 bool isDatabaseCorrupted = false;
 bool isDatabaseImportedOnThisSession = false;
+PackageInfo? packageInfoGlobal;
 
 Future<bool> initializeSettings() async {
   packageInfoGlobal = await PackageInfo.fromPlatform();
@@ -294,7 +295,7 @@ void openLanguagePicker(BuildContext context) {
               );
               await Future.delayed(Duration(milliseconds: 50));
               initializeLocalizedMonthNames();
-              Navigator.pop(context);
+              popRoute(context);
             },
           ),
         ],

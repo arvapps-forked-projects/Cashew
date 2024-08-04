@@ -305,6 +305,17 @@ class DebugPage extends StatelessWidget {
           ),
         ),
         SettingsContainerSwitch(
+          onSwitched: (value) async {
+            updateSettings("forceAutoLogin", value, updateGlobalState: false);
+          },
+          title: "Force Auto Login",
+          description: "If sync is disabled or web app, force login popup.",
+          initialValue: appStateSettings["forceAutoLogin"] == true,
+          icon: appStateSettings["outlinedIcons"]
+              ? Icons.input_outlined
+              : Icons.input_rounded,
+        ),
+        SettingsContainerSwitch(
           enableBorderRadius: true,
           onSwitched: (value) {
             updateSettings("syncEveryChange", value,
@@ -318,8 +329,8 @@ class DebugPage extends StatelessWidget {
                 : "sync-every-change-description2".tr();
           },
           icon: appStateSettings["outlinedIcons"]
-              ? Icons.all_inbox_outlined
-              : Icons.all_inbox_rounded,
+              ? Icons.sync_outlined
+              : Icons.sync_rounded,
         ),
         SettingsContainerSwitch(
           title: "Emulate iOS",
@@ -398,7 +409,7 @@ class DebugPage extends StatelessWidget {
                 updateGlobalState: false, pagesNeedingRefresh: [3]);
           },
           initialValue: appStateSettings["showBillSplitterShortcut"] == true,
-          icon: Icons.bookmark_add,
+          icon: Icons.summarize_rounded,
         ),
         SettingsContainerSwitch(
           title: "Method Added",

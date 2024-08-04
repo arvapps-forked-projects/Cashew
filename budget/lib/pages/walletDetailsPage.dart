@@ -78,13 +78,9 @@ DateTimeRange? getDateTimeRangeForPassedSearchFilters(
     return null;
   return createSafeDateTimeRange(
     start: getStartDateOfSelectedCustomPeriod(cycleSettingsExtension) ??
-        DateTime.now(),
+        DateTime.now().justDay(),
     end: getEndDateOfSelectedCustomPeriod(cycleSettingsExtension) ??
-        DateTime(
-          DateTime.now().year,
-          DateTime.now().month + 1,
-          DateTime.now().day,
-        ),
+        DateTime.now().justDay(monthOffset: 1),
   );
 }
 
@@ -147,7 +143,6 @@ class WalletDetailsPageState extends State<WalletDetailsPage>
       appStateSettings["netAllSpendingTotal"] == true;
 
   void scrollToTop() {
-    print("SCROLLING TO TOP");
     pageState.currentState?.scrollToTop();
   }
 
@@ -2011,7 +2006,6 @@ class _WalletCategoryPieChartState extends State<WalletCategoryPieChart> {
                 showAllSubcategories: showAllSubcategories,
                 multiplyTotalBy: -1,
               );
-              // print(s.totalSpent);
               List<Widget> categoryEntries = [];
               double totalSpentPercent = 45 / 360;
               snapshot.data!.asMap().forEach((index, category) {
@@ -2235,7 +2229,8 @@ class _AllSpendingPastSpendingGraphState
       watchedStreamsIncome.add(
         database.watchTotalWithCountOfWallet(
           isIncome: true,
-          includeBalanceCorrection: widget.appStateSettingsNetAllSpendingTotal,
+          includeBalanceCorrection: true,
+          // includeBalanceCorrection: widget.appStateSettingsNetAllSpendingTotal,
           allWallets: Provider.of<AllWallets>(context, listen: false),
           followCustomPeriodCycle: false,
           cycleSettingsExtension: "",
@@ -2246,7 +2241,8 @@ class _AllSpendingPastSpendingGraphState
       watchedStreamsExpense.add(
         database.watchTotalWithCountOfWallet(
           isIncome: false,
-          includeBalanceCorrection: widget.appStateSettingsNetAllSpendingTotal,
+          includeBalanceCorrection: true,
+          // includeBalanceCorrection: widget.appStateSettingsNetAllSpendingTotal,
           allWallets: Provider.of<AllWallets>(context, listen: false),
           followCustomPeriodCycle: false,
           cycleSettingsExtension: "",

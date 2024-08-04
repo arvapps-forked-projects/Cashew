@@ -11,6 +11,7 @@ import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/throttler.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/importCSV.dart';
+import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/openSnackbar.dart';
@@ -265,13 +266,12 @@ Future processMessageToParse(
     dateTime: await getDateTimeFromParams(params, context),
   );
   if (result == false) {
-    if (navigatorKey.currentContext != null)
-      pushRoute(
-        navigatorKey.currentContext!,
-        AddEmailTemplate(
-          messagesList: recentCapturedNotifications,
-        ),
-      );
+    pushRoute(
+      null,
+      AddEmailTemplate(
+        messagesList: recentCapturedNotifications,
+      ),
+    );
   }
 }
 

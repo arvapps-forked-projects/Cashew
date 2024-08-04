@@ -5,6 +5,7 @@ import 'dart:convert';
 
 import 'package:budget/database/binary_string_conversion.dart';
 import 'package:budget/database/tables.dart';
+import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
@@ -191,6 +192,17 @@ Future<dynamic> cancelAndPreventSyncOperation() async {
   return await syncDataCompleter.operation.cancel();
 }
 
+Future<bool> runForceSignIn(BuildContext context) async {
+  if (appStateSettings["forceAutoLogin"] == false) return false;
+  if (appStateSettings["hasSignedIn"] == false) return false;
+  return await signInGoogle(
+    gMailPermissions: false,
+    waitForCompletion: false,
+    silentSignIn: true,
+    context: context,
+  );
+}
+
 Future<bool> syncData(BuildContext context) async {
   // Create a new instance of the completer
   if (syncDataCompleter.isCompleted) {
@@ -333,7 +345,7 @@ Future<bool> _syncData(BuildContext context) async {
               ? Icons.sync_problem_outlined
               : Icons.sync_problem_rounded,
           onSubmit: () {
-            Navigator.pop(context);
+            popRoute(context);
           },
           onSubmitLabel: "ok".tr(),
         );
@@ -496,7 +508,7 @@ Future<bool> _syncData(BuildContext context) async {
             ? Icons.sync_problem_outlined
             : Icons.sync_problem_rounded,
         onCancel: () {
-          Navigator.pop(context);
+          popRoute(context);
         },
         onCancelLabel: "close".tr(),
         onSubmit: () {

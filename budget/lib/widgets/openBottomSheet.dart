@@ -103,6 +103,7 @@ Future openBottomSheet(
 
   return await showSlidingBottomSheet(
     context,
+    useRootNavigator: false,
     resizeToAvoidBottomInset: resizeForKeyboard,
     // getOSInsideWeb() == "iOS" ? false : resizeForKeyboard,
     builder: (context) {
@@ -258,7 +259,7 @@ bool checkIfDefaultThemeData(BuildContext? context) {
 //         padding: EdgeInsetsDirectional.only(top: MediaQuery.paddingOf(context).top),
 //         child: GestureDetector(
 //           onTap: () {
-//             Navigator.pop(context);
+//             popRoute(context);
 //           },
 //           child: Align(
 //             alignment: AlignmentDirectional.bottomCenter,

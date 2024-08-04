@@ -172,33 +172,24 @@ class _LineChartState extends State<_LineChart> with WidgetsBindingObserver {
               // print(titleMeta.max);
 
               String text = getWordedDateShort(
-                DateTime(
-                  currentDate.year,
-                  currentDate.month,
-                  currentDate.day - widget.maxPair.x.toInt() + value.round(),
-                ),
+                currentDate.justDay(
+                    dayOffset: -widget.maxPair.x.toInt() + value.round()),
                 showTodayTomorrow: false,
               );
 
               // String textBefore = getWordedDateShort(
-              //   DateTime(
-              //     currentDate.year,
-              //     currentDate.month,
-              //     currentDate.day -
-              //         widget.maxPair.x.toInt() +
-              //         valueBefore.round(),
-              //   ),
+              //   currentDate.justDay(
+              //       dayOffset: -widget.maxPair.x.toInt() + valueBefore.round()),
               //   showTodayTomorrow: false,
               // );
 
               return MediaQuery(
-                data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(1.0)),
                 child: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: TextFont(
-                    overflow: TextOverflow.fade,
                     maxLines: 1,
-                    softWrap: false,
                     textAlign: TextAlign.center,
                     fontSize: 13,
                     text: text,
@@ -242,7 +233,8 @@ class _LineChartState extends State<_LineChart> with WidgetsBindingObserver {
               return Padding(
                 padding: const EdgeInsets.only(right: 8.0),
                 child: MediaQuery(
-                  data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+                  data: MediaQuery.of(context)
+                      .copyWith(textScaler: TextScaler.linear(1.0)),
                   child: TextFont(
                     overflow: TextOverflow.fade,
                     maxLines: 1,
@@ -380,13 +372,8 @@ class _LineChartState extends State<_LineChart> with WidgetsBindingObserver {
               }
               DateTime currentDate =
                   widget.endDate == null ? DateTime.now() : widget.endDate!;
-              DateTime tooltipDate = DateTime(
-                currentDate.year,
-                currentDate.month,
-                currentDate.day -
-                    widget.maxPair.x.toInt() +
-                    lineBarSpot.x.toInt(),
-              );
+              DateTime tooltipDate = currentDate.justDay(
+                  dayOffset: -widget.maxPair.x.toInt() + lineBarSpot.x.toInt());
               return LineTooltipItem(
                 getWordedDateShort(
                       tooltipDate,

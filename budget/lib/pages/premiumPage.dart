@@ -114,8 +114,8 @@ class PremiumPage extends StatelessWidget {
                                       SubscriptionFeature(
                                         iconData:
                                             appStateSettings["outlinedIcons"]
-                                                ? Icons.thumb_up_outlined
-                                                : Icons.thumb_up_rounded,
+                                                ? Icons.favorite_outlined
+                                                : Icons.favorite_rounded,
                                         label: "support-the-developer".tr(),
                                         description:
                                             "support-the-developer-description"
@@ -230,7 +230,7 @@ class PremiumPage extends StatelessWidget {
                               Colors.black.withOpacity(canDismiss ? 0.9 : 0.16),
                         ),
                         onPressed: () {
-                          Navigator.pop(context);
+                          popRoute(context);
                         },
                       ),
                     ),
@@ -378,7 +378,7 @@ class _FreePremiumMessageState extends State<FreePremiumMessage> {
                     updateSettings("premiumPopupFreeSeen", true,
                         updateGlobalState: false);
                   }
-                  Navigator.pop(context, false); //Pop current popup route
+                  popRoute(context, false); //Pop current popup route
                 },
               ),
             ),
@@ -396,8 +396,8 @@ class _FreePremiumMessageState extends State<FreePremiumMessage> {
                           : ""),
                   onTap: () {
                     if (timerUp) {
-                      Navigator.pop(context, true); //Pop current popup route
-                      Navigator.pop(context, true); //Pop premium page route
+                      popRoute(context, true); //Pop current popup route
+                      popRoute(context, true); //Pop premium page route
                       updateSettings("premiumPopupFreeSeen", true,
                           updateGlobalState: false);
                     }
@@ -416,8 +416,8 @@ class _FreePremiumMessageState extends State<FreePremiumMessage> {
               expandedLayout: true,
               label: "no-free-stuff".tr(),
               onTap: () {
-                Navigator.pop(context); //Pop current route
-                Navigator.pop(context, false); //Pop premium page route
+                popRoute(context); //Pop current route
+                popRoute(context, false); //Pop premium page route
               },
               color: Theme.of(context).colorScheme.tertiaryContainer,
               textColor: Theme.of(context).colorScheme.onTertiaryContainer,
@@ -588,9 +588,8 @@ void listenToPurchaseUpdated({
         updateSettings("purchaseID", purchaseDetails.productID,
             updateGlobalState: false, pagesNeedingRefresh: [3]);
         print("Purchased " + purchaseDetails.productID);
-        if (popRouteWithPurchase == true &&
-            navigatorKey.currentContext != null) {
-          Navigator.pop(navigatorKey.currentContext!, true);
+        if (popRouteWithPurchase == true) {
+          popRoute(null, true);
         }
       }
 
@@ -684,9 +683,37 @@ Future restorePurchases(BuildContext context) async {
     await InAppPurchase.instance.restorePurchases();
     SnackBar snackBar = SnackBar(
       content: Text('any-previous-purchases-restored'.tr()),
+      action: getPlatform(ignoreEmulation: true) == PlatformOS.isAndroid
+          ? SnackBarAction(
+              label: "help".tr().capitalizeFirst,
+              onPressed: () {
+                showHelpRestorePopup(context);
+              })
+          : null,
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
+}
+
+showHelpRestorePopup(BuildContext context) {
+  openPopup(
+    context,
+    icon: appStateSettings["outlinedIcons"]
+        ? Icons.shop_2_outlined
+        : Icons.shop_2_rounded,
+    title: "restore-purchases".tr(),
+    description: "restore-purchases-help".tr(),
+    onCancel: () => popRoute(context),
+    onCancelLabel: "close".tr(),
+    onSubmitLabel: "contact".tr(),
+    onSubmit: () async {
+      bool openResult = await openUrl('mailto:dapperappdeveloper@gmail.com');
+      if (openResult == false) copyToClipboard("dapperappdeveloper@gmail.com");
+    },
+    onExtra: () =>
+        openUrl("https://cashewapp.web.app/faq.html#restoring-purchases"),
+    onExtraLabel: "FAQ".tr(),
+  );
 }
 
 bool hidePremiumPopup() {
@@ -716,7 +743,7 @@ Future<bool> premiumPopupBudgets(BuildContext context) async {
     if (await premiumPopupPushRoute(context) == true) {
       return true;
     } else {
-      Navigator.pop(context);
+      popRoute(context);
       return false;
     }
   } else {
@@ -732,7 +759,7 @@ Future<bool> premiumPopupObjectives(BuildContext context,
     if (await premiumPopupPushRoute(context) == true) {
       return true;
     } else {
-      Navigator.pop(context);
+      popRoute(context);
       return false;
     }
   } else {
@@ -745,7 +772,7 @@ Future<bool> premiumPopupPastBudgets(BuildContext context) async {
   if (await premiumPopupPushRoute(context) == true) {
     return true;
   } else {
-    Navigator.pop(context);
+    popRoute(context);
     return false;
   }
 }

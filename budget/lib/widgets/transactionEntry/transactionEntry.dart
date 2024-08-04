@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
+import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/listenableSelector.dart';
 import 'package:budget/struct/settings.dart';
@@ -745,7 +746,7 @@ class CollapseFutureTransactions extends StatelessWidget {
       builder: (context, _, __) {
         bool isTransactionsCollapsed =
             (globalCollapsedFutureID.value[listID ?? "0"] ?? false) &&
-                isAfterCurrentDate(dateToCompare);
+                dateToCompare.justDay().isAfter(DateTime.now().justDay());
         return AnimatedExpanded(
           duration: const Duration(milliseconds: 425),
           sizeCurve: Curves.fastOutSlowIn,
@@ -756,17 +757,6 @@ class CollapseFutureTransactions extends StatelessWidget {
       },
     );
   }
-}
-
-bool isAfterCurrentDate(DateTime dateToCompare) {
-  return DateTime(dateToCompare.year, dateToCompare.month, dateToCompare.day)
-      .isAfter(
-    DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    ),
-  );
 }
 
 void toggleFutureTransactionsSection(String? listID) {

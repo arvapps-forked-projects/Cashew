@@ -61,22 +61,19 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
     ));
   }
 
-  void setLowerRangePopup() {
-    openBottomSheet(
+  void setLowerRangePopup() async {
+    double lowerRange = _currentRangeValues.start;
+    // Result will be false if we reset the amount
+    dynamic result = await openBottomSheet(
       context,
       PopupFramework(
         title: "set-lower-range".tr(),
         child: Column(
           children: [
             SelectAmount(
-              amountPassed: _currentRangeValues.start.toString(),
+              amountPassed: lowerRange.toString(),
               setSelectedAmount: (amount, _) {
-                updateRange(orderAndBoundRangeValues(
-                  amount,
-                  _currentRangeValues.end,
-                  widget.rangeLimit.start,
-                  widget.rangeLimit.end,
-                ));
+                lowerRange = amount;
               },
               hideNextButton: true,
             ),
@@ -88,7 +85,7 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
                     label: "reset".tr(),
                     onTap: () async {
                       resetRange();
-                      Navigator.pop(context);
+                      popRoute(context, false);
                     },
                     color: Theme.of(context).colorScheme.tertiaryContainer,
                     textColor:
@@ -101,7 +98,7 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
                     expandedLayout: true,
                     label: "set-range".tr(),
                     onTap: () async {
-                      Navigator.pop(context);
+                      popRoute(context);
                     },
                   ),
                 ),
@@ -111,24 +108,28 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
         ),
       ),
     );
+    if (result != false)
+      updateRange(orderAndBoundRangeValues(
+        lowerRange,
+        _currentRangeValues.end,
+        widget.rangeLimit.start,
+        widget.rangeLimit.end,
+      ));
   }
 
-  void setUpperRangePopup() {
-    openBottomSheet(
+  void setUpperRangePopup() async {
+    double upperRange = _currentRangeValues.end;
+    // Result will be false if we reset the amount
+    dynamic result = await openBottomSheet(
       context,
       PopupFramework(
         title: "set-upper-range".tr(),
         child: Column(
           children: [
             SelectAmount(
-              amountPassed: _currentRangeValues.end.toString(),
+              amountPassed: upperRange.toString(),
               setSelectedAmount: (amount, _) {
-                updateRange(orderAndBoundRangeValues(
-                  _currentRangeValues.start,
-                  amount,
-                  widget.rangeLimit.start,
-                  widget.rangeLimit.end,
-                ));
+                upperRange = amount;
               },
               hideNextButton: true,
             ),
@@ -140,7 +141,7 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
                     label: "reset".tr(),
                     onTap: () async {
                       resetRange();
-                      Navigator.pop(context);
+                      popRoute(context, false);
                     },
                     color: Theme.of(context).colorScheme.tertiaryContainer,
                     textColor:
@@ -153,7 +154,7 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
                     expandedLayout: true,
                     label: "set-range".tr(),
                     onTap: () async {
-                      Navigator.pop(context);
+                      popRoute(context);
                     },
                   ),
                 ),
@@ -163,6 +164,13 @@ class _AmountSlideRangerState extends State<AmountRangeSlider> {
         ),
       ),
     );
+    if (result != false)
+      updateRange(orderAndBoundRangeValues(
+        _currentRangeValues.start,
+        upperRange,
+        widget.rangeLimit.start,
+        widget.rangeLimit.end,
+      ));
   }
 
   @override

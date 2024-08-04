@@ -65,8 +65,7 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
 
   double? selectedAmount;
   int selectedPeriodLength = 1;
-  DateTime selectedStartDate =
-      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  DateTime selectedStartDate = DateTime.now().firstDayOfMonth();
   DateTime? selectedEndDate;
   String selectedRecurrence = "Monthly";
   bool selectedIncludeIncome = false;
@@ -126,10 +125,10 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
     if (generatePreview) {
       openLoadingPopup(context);
       await generatePreviewData();
-      Navigator.pop(context);
+      popRoute(context);
     }
     if (widget.popNavigationWhenDone) {
-      Navigator.pop(context);
+      popRoute(context);
     } else {
       updateSettings("hasOnboarded", true,
           pagesNeedingRefresh: [], updateGlobalState: true);
@@ -374,7 +373,7 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
                               CurrencyPicker(
                                 showExchangeRateInfoNotice: false,
                                 onSelected: (selectedCurrency) {
-                                  Navigator.pop(context);
+                                  popRoute(context);
                                   database.createOrUpdateWallet(
                                       primaryWallet.copyWith(
                                           currency: Value(selectedCurrency)));
@@ -487,10 +486,10 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
                         //     title: "backup-found".tr(),
                         //     description: "backup-found-description".tr(),
                         //     onSubmit: () {
-                        //       Navigator.pop(context, true);
+                        //       popRoute(context, true);
                         //     },
                         //     onCancel: () {
-                        //       Navigator.pop(context, false);
+                        //       popRoute(context, false);
                         //     },
                         //     onSubmitLabel: "restore".tr(),
                         //     onCancelLabel: "cancel".tr(),
@@ -506,7 +505,7 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
                         //     context,
                         //     forceSignIn: true,
                         //   );
-                        //   Navigator.pop(context);
+                        //   popRoute(context);
                         //   nextNavigation();
                         // }
                         // else {
