@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
-import 'package:budget/main.dart';
 import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/listenableSelector.dart';
@@ -96,6 +95,7 @@ class TransactionEntry extends StatelessWidget {
     this.subCategory,
     this.budget,
     this.objective,
+    this.objectiveLoan,
     this.onSelected,
     this.containerColor,
     this.useHorizontalPaddingConstrained = true,
@@ -119,6 +119,7 @@ class TransactionEntry extends StatelessWidget {
   final TransactionCategory? subCategory;
   final Budget? budget;
   final Objective? objective;
+  final Objective? objectiveLoan;
   final Function(Transaction transaction, bool selected)? onSelected;
   final Color? containerColor;
   final bool useHorizontalPaddingConstrained;
@@ -359,6 +360,7 @@ class TransactionEntry extends StatelessWidget {
         subCategory: subCategory,
         budget: budget,
         objective: objective,
+        objectiveLoan: objectiveLoan,
         showExcludedBudgetTag: showExcludedBudgetTag,
       );
       Widget noteIcon = TransactionEntryNote(

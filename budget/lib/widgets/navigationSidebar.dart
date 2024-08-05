@@ -1,4 +1,3 @@
-import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
 import 'package:budget/pages/editCategoriesPage.dart';
@@ -8,8 +7,6 @@ import 'package:budget/struct/navBarIconsData.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/accountAndBackup.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
-import 'package:budget/widgets/bottomNavBar.dart';
-import 'package:budget/widgets/moreIcons.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/tappable.dart';
@@ -75,6 +72,10 @@ class NavigationSidebar extends StatefulWidget {
 class NavigationSidebarState extends State<NavigationSidebar> {
   int selectedIndex = 0;
   bool isCalendarOpened = false;
+
+  void refreshState() {
+    setState(() {});
+  }
 
   void setSelectedIndex(index) {
     setState(() {
@@ -304,11 +305,6 @@ class NavigationSidebarState extends State<NavigationSidebar> {
                               SizedBox(height: 40),
                               GoogleAccountLoginButton(
                                 navigationSidebarButton: true,
-                                onTap: () {
-                                  pageNavigationFrameworkKey.currentState!
-                                      .changePage(8, switchNavbar: true);
-                                  appStateKey.currentState?.refreshAppState();
-                                },
                                 isButtonSelected: selectedIndex == 8,
                               ),
                               NavigationSidebarButtonWithNavBarIconData(

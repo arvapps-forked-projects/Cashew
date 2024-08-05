@@ -1,14 +1,12 @@
 import 'package:budget/functions.dart';
 import 'package:budget/pages/accountsPage.dart';
 import 'package:budget/pages/autoTransactionsPageEmail.dart';
-import 'package:budget/pages/walletDetailsPage.dart';
 import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/iconObjects.dart';
 import 'package:budget/struct/keyboardIntents.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
-import 'package:budget/widgets/transactionEntry/transactionEntry.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
 import 'package:budget/widgets/util/watchForDayChange.dart';
@@ -123,11 +121,16 @@ class App extends StatelessWidget {
             Row(
               children: [
                 NavigationSidebar(key: sidebarStateKey),
-                Expanded(child: InitialPageRouteNavigator()),
+                Expanded(
+                    child: Stack(
+                  children: [
+                    InitialPageRouteNavigator(),
+                    GlobalSnackbar(key: snackbarKey),
+                  ],
+                )),
               ],
             ),
-            GlobalSnackbar(key: snackbarKey),
-            //SignInWithGoogleFlyIn(),
+            EnableSignInWithGoogleFlyIn(),
             GlobalLoadingIndeterminate(key: loadingIndeterminateKey),
             GlobalLoadingProgress(key: loadingProgressKey),
           ],
