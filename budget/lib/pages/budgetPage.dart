@@ -8,6 +8,7 @@ import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/pastBudgetsPage.dart';
 import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
+import 'package:budget/pages/walletDetailsPage.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/defaultPreferences.dart';
 import 'package:budget/struct/settings.dart';
@@ -15,6 +16,7 @@ import 'package:budget/struct/spendingSummaryHelper.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
 import 'package:budget/widgets/extraInfoBoxes.dart';
+import 'package:budget/widgets/iconButtonScaled.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/selectedTransactionsAppBar.dart';
 import 'package:budget/widgets/budgetContainer.dart';
@@ -39,21 +41,20 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:budget/widgets/countNumber.dart';
 import 'package:budget/struct/currencyFunctions.dart';
-
-import 'package:budget/widgets/util/widgetSize.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 
 class BudgetPage extends StatelessWidget {
   const BudgetPage({
     super.key,
     required this.budgetPk,
     this.dateForRange,
-    this.isPastBudget = false,
-    this.isPastBudgetButCurrentPeriod = false,
+    this.dateForRangeIndex = 0,
+    this.openedFromHistory = false,
   });
   final String budgetPk;
   final DateTime? dateForRange;
-  final bool? isPastBudget;
-  final bool? isPastBudgetButCurrentPeriod;
+  final int dateForRangeIndex;
+  final bool openedFromHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -67,8 +68,8 @@ class BudgetPage extends StatelessWidget {
               child: _BudgetPageContent(
                 budget: snapshot.data!,
                 dateForRange: dateForRange,
-                isPastBudget: isPastBudget,
-                isPastBudgetButCurrentPeriod: isPastBudgetButCurrentPeriod,
+                dateForRangeIndex: dateForRangeIndex,
+                openedFromHistory: openedFromHistory,
               ),
             );
           }
@@ -82,21 +83,20 @@ class _BudgetPageContent extends StatefulWidget {
     Key? key,
     required Budget this.budget,
     this.dateForRange,
-    this.isPastBudget = false,
-    this.isPastBudgetButCurrentPeriod = false,
+    this.dateForRangeIndex = 0,
+    this.openedFromHistory = false,
   }) : super(key: key);
 
   final Budget budget;
   final DateTime? dateForRange;
-  final bool? isPastBudget;
-  final bool? isPastBudgetButCurrentPeriod;
+  final int dateForRangeIndex;
+  final bool openedFromHistory;
 
   @override
   State<_BudgetPageContent> createState() => _BudgetPageContentState();
 }
 
 class _BudgetPageContentState extends State<_BudgetPageContent> {
-  double budgetHeaderHeight = 0;
   String? selectedMember = null;
   bool showAllSubcategories = appStateSettings["showAllSubcategories"] == true;
   TransactionCategory? selectedCategory =
@@ -104,13 +104,37 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
   GlobalKey<PieChartDisplayState> _pieChartDisplayStateKey = GlobalKey();
   bool showAllCategoriesWithCategoryLimit =
       appStateSettings["expandAllCategoriesWithSpendingLimits"] == true;
+  final scrollController = ScrollController();
+  late int dateForRangeIndex = widget.dateForRangeIndex;
+  late DateTime dateForRange =
+      widget.dateForRange == null ? DateTime.now() : widget.dateForRange!;
+  bool budgetHistoryDismissedPremium = false;
+  bool get isPastBudget => dateForRangeIndex != 0;
+  bool get isPastBudgetButCurrentPeriod => dateForRangeIndex == 0;
 
   @override
   void initState() {
     Future.delayed(Duration.zero, () {
-      if (widget.isPastBudget == true) premiumPopupPastBudgets(context);
+      if (isPastBudget == true) premiumPopupPastBudgets(context);
     });
     super.initState();
+  }
+
+  void changeSelectedDateRange(int delta) async {
+    int index = (dateForRangeIndex) - delta;
+    if (index >= 0) {
+      if (budgetHistoryDismissedPremium == false)
+        budgetHistoryDismissedPremium = await premiumPopupPastBudgets(context);
+      if (budgetHistoryDismissedPremium) {
+        setState(() {
+          dateForRangeIndex = index;
+          dateForRange = getDatePastToDetermineBudgetDate(
+            index,
+            widget.budget,
+          );
+        });
+      }
+    }
   }
 
   void toggleAllSubcategories() {
@@ -156,6 +180,7 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
             pieChartDisplayStateKey: _pieChartDisplayStateKey,
             data: dataFilterUnassignedTransactions,
             totalSpent: totalSpent,
+            middleColor: pageBackgroundColor,
             setSelectedCategory: (categoryPk, category) async {
               setState(() {
                 selectedCategory = category;
@@ -173,8 +198,6 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
               //   });
               // }
             },
-            isPastBudget: widget.isPastBudget ?? false,
-            middleColor: pageBackgroundColor,
           ),
         ),
         PieChartOptions(
@@ -206,8 +229,6 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
   Widget build(BuildContext context) {
     double budgetAmount = budgetAmountToPrimaryCurrency(
         Provider.of<AllWallets>(context, listen: true), widget.budget);
-    DateTime dateForRange =
-        widget.dateForRange == null ? DateTime.now() : widget.dateForRange!;
     DateTimeRange budgetRange = getBudgetDate(widget.budget, dateForRange);
     String pageId = budgetRange.start.millisecondsSinceEpoch.toString() +
         widget.budget.name +
@@ -233,6 +254,12 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
       //dateForRange,
       DateTime.now(),
     );
+    String startDateString = getWordedDateShort(budgetRange.start);
+    String endDateString = getWordedDateShort(budgetRange.end);
+    String timeRangeString = startDateString == endDateString
+        ? startDateString
+        : startDateString + " – " + endDateString;
+    bool showingSelectedPeriodAppBar = widget.openedFromHistory == true;
     return WillPopScope(
       onWillPop: () async {
         if ((globalSelectedID.value[pageId] ?? []).length > 0) {
@@ -322,8 +349,8 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
                 },
               ),
               if (widget.budget.reoccurrence != BudgetReoccurence.custom &&
-                  widget.isPastBudget == false &&
-                  widget.isPastBudgetButCurrentPeriod == false)
+                  isPastBudget == false &&
+                  isPastBudgetButCurrentPeriod == false)
                 DropdownItemMenu(
                   id: "budget-history",
                   label: "budget-history".tr(),
@@ -364,6 +391,7 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
             Theme.of(context).colorScheme.secondaryContainer,
         textColor: getColor(context, "black"),
         dragDownToDismiss: true,
+        scrollController: scrollController,
         slivers: [
           StreamBuilder<List<CategoryWithTotal>>(
               stream: database.watchAllCategoryLimitsInBudgetWithCategory(
@@ -530,118 +558,184 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
                       },
                     );
                     // print(s.totalSpent);
-                    return SliverToBoxAdapter(
-                      child: Column(
-                        children: [
-                          Transform.translate(
-                            offset: Offset(0, -10).withDirectionality(context),
-                            child: WidgetSize(
-                              onChange: (Size size) {
-                                budgetHeaderHeight = size.height - 20;
-                              },
-                              child: Container(
-                                padding: EdgeInsetsDirectional.only(
-                                  top: 10,
-                                  bottom: 22,
-                                  start: 22,
-                                  end: 22,
-                                ),
-                                decoration: BoxDecoration(
-                                  // borderRadius: BorderRadiusDirectional.vertical(
-                                  //     bottom: Radius.circular(10)),
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .secondaryContainer,
-                                ),
-                                child: Column(
-                                  children: [
-                                    Transform.scale(
-                                      alignment:
-                                          AlignmentDirectional.bottomCenter,
-                                      scale: 1500,
-                                      child: Container(
-                                        height: 10,
-                                        width: 100,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .secondaryContainer,
-                                      ),
+                    return MultiSliver(
+                      children: [
+                        SliverToBoxAdapter(
+                          child: Container(
+                            padding: EdgeInsetsDirectional.only(
+                              bottom: showingSelectedPeriodAppBar
+                                  ? isPastBudgetButCurrentPeriod == true
+                                      ? 14
+                                      : 5
+                                  : 20,
+                              start: 22,
+                              end: 22,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
+                            ),
+                            child: AnimatedSizeSwitcher(
+                              child: Column(
+                                key: ValueKey(isPastBudgetButCurrentPeriod),
+                                children: [
+                                  Transform.scale(
+                                    alignment:
+                                        AlignmentDirectional.bottomCenter,
+                                    scale: 1500,
+                                    child: Container(
+                                      height: 10,
+                                      width: 100,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .secondaryContainer,
                                     ),
-                                    Padding(
-                                      padding: EdgeInsetsDirectional.symmetric(
-                                        horizontal:
-                                            getHorizontalPaddingConstrained(
-                                                context),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsetsDirectional.symmetric(
+                                      horizontal:
+                                          getHorizontalPaddingConstrained(
+                                              context),
+                                    ),
+                                    child: StreamBuilder<double?>(
+                                      stream: database.watchTotalOfBudget(
+                                        allWallets:
+                                            Provider.of<AllWallets>(context),
+                                        start: budgetRange.start,
+                                        end: budgetRange.end,
+                                        categoryFks: widget.budget.categoryFks,
+                                        categoryFksExclude:
+                                            widget.budget.categoryFksExclude,
+                                        budgetTransactionFilters: widget
+                                            .budget.budgetTransactionFilters,
+                                        memberTransactionFilters: widget
+                                            .budget.memberTransactionFilters,
+                                        member: selectedMember,
+                                        onlyShowTransactionsBelongingToBudgetPk:
+                                            widget.budget.sharedKey != null ||
+                                                    widget.budget
+                                                            .addedTransactionsOnly ==
+                                                        true
+                                                ? widget.budget.budgetPk
+                                                : null,
+                                        budget: widget.budget,
+                                        searchFilters: SearchFilters(
+                                            paidStatus: [PaidStatus.notPaid]),
+                                        paidOnly: false,
                                       ),
-                                      child: StreamBuilder<double?>(
-                                        stream: database.watchTotalOfBudget(
-                                          allWallets:
-                                              Provider.of<AllWallets>(context),
-                                          start: budgetRange.start,
-                                          end: budgetRange.end,
-                                          categoryFks:
-                                              widget.budget.categoryFks,
-                                          categoryFksExclude:
-                                              widget.budget.categoryFksExclude,
-                                          budgetTransactionFilters: widget
-                                              .budget.budgetTransactionFilters,
-                                          memberTransactionFilters: widget
-                                              .budget.memberTransactionFilters,
-                                          member: selectedMember,
-                                          onlyShowTransactionsBelongingToBudgetPk:
-                                              widget.budget.sharedKey != null ||
-                                                      widget.budget
-                                                              .addedTransactionsOnly ==
-                                                          true
-                                                  ? widget.budget.budgetPk
-                                                  : null,
+                                      builder: (context, snapshot) {
+                                        return BudgetTimeline(
+                                          dateForRange: dateForRange,
                                           budget: widget.budget,
-                                          searchFilters: SearchFilters(
-                                              paidStatus: [PaidStatus.notPaid]),
-                                          paidOnly: false,
-                                        ),
-                                        builder: (context, snapshot) {
-                                          return BudgetTimeline(
-                                            dateForRange: dateForRange,
-                                            budget: widget.budget,
-                                            large: true,
-                                            percent: budgetAmount == 0
-                                                ? 0
-                                                : s.totalSpent /
-                                                    budgetAmount *
-                                                    100,
-                                            yourPercent: 0,
-                                            todayPercent:
-                                                widget.isPastBudget == true
-                                                    ? -1
-                                                    : todayPercent,
-                                            ghostPercent: budgetAmount == 0
-                                                ? 0
-                                                : (((snapshot.data ?? 0) *
-                                                            determineBudgetPolarity(
-                                                                widget
-                                                                    .budget)) /
-                                                        budgetAmount) *
-                                                    100,
-                                          );
-                                        },
-                                      ),
+                                          large: true,
+                                          percent: budgetAmount == 0
+                                              ? 0
+                                              : s.totalSpent /
+                                                  budgetAmount *
+                                                  100,
+                                          yourPercent: 0,
+                                          todayPercent: isPastBudget == true
+                                              ? -1
+                                              : todayPercent,
+                                          ghostPercent: budgetAmount == 0
+                                              ? 0
+                                              : (((snapshot.data ?? 0) *
+                                                          determineBudgetPolarity(
+                                                              widget.budget)) /
+                                                      budgetAmount) *
+                                                  100,
+                                        );
+                                      },
                                     ),
-                                    widget.isPastBudget == true
-                                        ? SizedBox.shrink()
-                                        : DaySpending(
-                                            budget: widget.budget,
-                                            totalAmount: s.totalSpent,
-                                            large: true,
-                                            budgetRange: budgetRange,
-                                            padding: const EdgeInsetsDirectional
-                                                .only(top: 15, bottom: 0),
-                                          ),
-                                  ],
-                                ),
+                                  ),
+                                  isPastBudget == true
+                                      ? SizedBox.shrink()
+                                      : DaySpending(
+                                          budget: widget.budget,
+                                          totalAmount: s.totalSpent,
+                                          large: true,
+                                          budgetRange: budgetRange,
+                                          padding:
+                                              const EdgeInsetsDirectional.only(
+                                                  top: 15, bottom: 0),
+                                        ),
+                                ],
                               ),
                             ),
                           ),
+                        ),
+                        SliverPinnedHeader(
+                          child: showingSelectedPeriodAppBar
+                              // Based on SelectedPeriodHeaderLabel
+                              ? Container(
+                                  transform:
+                                      Matrix4.translationValues(0, -1, 0),
+                                  padding: const EdgeInsetsDirectional.only(
+                                      bottom: 3, top: 3),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsetsDirectional
+                                            .symmetric(horizontal: 10),
+                                        child: IconButtonScaled(
+                                          iconData:
+                                              appStateSettings["outlinedIcons"]
+                                                  ? Icons.chevron_left_outlined
+                                                  : Icons.chevron_left_rounded,
+                                          iconSize: 18,
+                                          scale: 1,
+                                          onTap: () =>
+                                              changeSelectedDateRange(-1),
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: AnimatedSizeSwitcher(
+                                          child: TextFont(
+                                            key: ValueKey(timeRangeString),
+                                            text: timeRangeString,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            textAlign: TextAlign.center,
+                                            textColor: Theme.of(context)
+                                                .colorScheme
+                                                .onSecondaryContainer,
+                                            maxLines: 2,
+                                          ),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsetsDirectional
+                                            .symmetric(horizontal: 10),
+                                        child: DisabledButton(
+                                          disabled: dateForRangeIndex == 0,
+                                          child: IconButtonScaled(
+                                            iconData: appStateSettings[
+                                                    "outlinedIcons"]
+                                                ? Icons.chevron_right_outlined
+                                                : Icons.chevron_right_rounded,
+                                            iconSize: 18,
+                                            scale: 1,
+                                            onTap: () =>
+                                                changeSelectedDateRange(1),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  decoration: BoxDecoration(
+                                    boxShadow:
+                                        boxShadowCheck(boxShadowSharp(context)),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .secondaryContainer,
+                                  ),
+                                )
+                              : Container(),
+                        ),
+                        SliverToBoxAdapter(
+                            child: Column(children: [
                           appStateSettings["sharedBudgets"]
                               ? BudgetSpenderSummary(
                                   budget: widget.budget,
@@ -657,7 +751,7 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
                                 )
                               : SizedBox.shrink(),
                           if (categoryWithTotals.length > 0)
-                            SizedBox(height: 30),
+                            SizedBox(height: 37),
 
                           if (categoryWithTotals.length > 0)
                             pieChart(
@@ -723,8 +817,8 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ]))
+                      ],
                     );
                   },
                 );
@@ -767,7 +861,7 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
                 child: BudgetLineGraph(
                   budget: widget.budget,
                   dateForRange: dateForRange,
-                  isPastBudget: widget.isPastBudget,
+                  isPastBudget: isPastBudget,
                   selectedCategory: selectedCategory,
                   budgetRange: budgetRange,
                   showIfNone: false,
@@ -800,8 +894,8 @@ class _BudgetPageContentState extends State<_BudgetPageContent> {
             categoryTintColor: Theme.of(context).colorScheme.primary,
             noResultsExtraWidget:
                 widget.budget.reoccurrence != BudgetReoccurence.custom &&
-                        widget.isPastBudget == false &&
-                        widget.isPastBudgetButCurrentPeriod == false
+                        isPastBudget == false &&
+                        isPastBudgetButCurrentPeriod == false
                     ? Padding(
                         padding: const EdgeInsetsDirectional.only(top: 20),
                         child: ExtraInfoButton(
