@@ -8,6 +8,7 @@ import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/shareBudget.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/button.dart';
+import 'package:budget/widgets/dropdownSelect.dart';
 import 'package:budget/widgets/fab.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
@@ -111,28 +112,35 @@ class _EditBudgetPageState extends State<EditBudgetPage> {
           ),
         ),
         actions: [
-          appStateSettings["sharedBudgets"] == false
-              ? SizedBox.shrink()
-              : RefreshButton(onTap: () async {
-                  loadingIndeterminateKey.currentState?.setVisibility(true);
-                  await syncPendingQueueOnServer();
-                  await getCloudBudgets();
-                  loadingIndeterminateKey.currentState?.setVisibility(false);
-                }),
-          IconButton(
-            padding: EdgeInsetsDirectional.all(15),
-            tooltip: "add-budget".tr(),
-            onPressed: () {
-              pushRoute(
-                context,
-                AddBudgetPage(
-                  routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+          CustomPopupMenuButton(
+            showButtons: true,
+            keepOutFirst: true,
+            items: [
+              DropdownItemMenu(
+                id: "add-budget",
+                label: "add-budget".tr(),
+                icon: appStateSettings["outlinedIcons"]
+                    ? Icons.add_outlined
+                    : Icons.add_rounded,
+                action: () => pushRoute(
+                  context,
+                  AddBudgetPage(
+                    routesToPopAfterDelete: RoutesToPopAfterDelete.None,
+                  ),
                 ),
-              );
-            },
-            icon: Icon(appStateSettings["outlinedIcons"]
-                ? Icons.add_outlined
-                : Icons.add_rounded),
+              ),
+              DropdownItemMenu(
+                id: "settings",
+                label: "settings".tr(),
+                icon: appStateSettings["outlinedIcons"]
+                    ? Icons.more_vert_outlined
+                    : Icons.more_vert_rounded,
+                action: () => openBottomSheet(
+                  context,
+                  PopupFramework(hasPadding: false, child: BudgetSettings()),
+                ),
+              ),
+            ],
           ),
         ],
         slivers: [
@@ -165,12 +173,12 @@ class _EditBudgetPageState extends State<EditBudgetPage> {
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: AnimatedExpanded(
-              expand: hideIfSearching(searchValue, isFocused, context) == false,
-              child: TotalSpentToggle(),
-            ),
-          ),
+          // SliverToBoxAdapter(
+          //   child: AnimatedExpanded(
+          //     expand: hideIfSearching(searchValue, isFocused, context) == false,
+          //     child: BudgetSettings(),
+          //   ),
+          // ),
           StreamBuilder<List<Budget>>(
             stream: database.watchAllBudgets(
                 searchFor: searchValue == "" ? null : searchValue),
@@ -746,4 +754,65 @@ class _TotalSpentToggleState extends State<TotalSpentToggle> {
           : Icons.center_focus_weak_rounded,
     );
   }
+}
+
+Future duplicateBudgetPopup(
+  BuildContext context, {
+  required Budget budget,
+}) async {
+  dynamic result = await openPopup(
+    context,
+    title: "duplicate-budget-question".tr(),
+    subtitle: budget.name,
+    onCancelLabel: "cancel".tr(),
+    onCancel: () => Navigator.pop(context),
+    onSubmitLabel: "duplicate".tr(),
+    onSubmit: () => Navigator.pop(context, true),
+  );
+  if (result == true)
+    openLoadingPopupTryCatch(
+      () async {
+        int? rowId = await database.createOrUpdateBudget(
+          budget.copyWith(
+            dateCreated: DateTime.now(),
+            name: budget.name + " (" + "copy".tr() + ")",
+          ),
+          insert: true,
+        );
+
+        Budget? budgetJustAdded = null;
+        budgetJustAdded = await database.getBudgetFromRowId(rowId);
+
+        List<CategoryBudgetLimit> categoryLimits = await database
+            .getAllCategorySpendingLimitsInBudget(budget.budgetPk);
+        for (CategoryBudgetLimit categoryLimit in categoryLimits) {
+          await database.createOrUpdateCategoryLimit(
+            categoryLimit.copyWith(budgetFk: budgetJustAdded.budgetPk),
+            insert: true,
+          );
+        }
+        return budgetJustAdded;
+      },
+      onSuccess: (result) {
+        if (result is Budget) {
+          openSnackbar(
+            SnackbarMessage(
+              icon: appStateSettings["outlinedIcons"]
+                  ? Icons.file_copy_outlined
+                  : Icons.file_copy_rounded,
+              title: "created-copy".tr(),
+              description: result.name,
+            ),
+          );
+          Navigator.pop(context);
+          pushRoute(
+            context,
+            AddBudgetPage(
+              budget: result,
+              routesToPopAfterDelete: RoutesToPopAfterDelete.One,
+            ),
+          );
+        }
+      },
+    );
 }

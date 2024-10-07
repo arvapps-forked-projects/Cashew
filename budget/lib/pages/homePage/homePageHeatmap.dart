@@ -69,6 +69,7 @@ class _HomePageHeatMapState extends State<HomePageHeatMap> {
               customEndDate: DateTime.now(),
               totalSpentBefore: 0,
               isIncome: null,
+              removeBalanceCorrection: true,
               allWallets: Provider.of<AllWallets>(context, listen: false),
               showCumulativeSpending: false,
               appStateSettingsPassed: appStateSettings,
@@ -398,11 +399,7 @@ Future<dynamic> openTransactionsOnDayBottomSheet(
         renderType: TransactionEntriesRenderType.nonSlivers,
         day,
         day,
-        transactionBackgroundColor: appStateSettings["materialYou"]
-            ? dynamicPastel(
-                context, Theme.of(context).colorScheme.secondaryContainer,
-                amountDark: 0.3, amountLight: 0.6)
-            : getColor(context, "lightDarkAccent"),
+        transactionBackgroundColor: getPopupBackgroundColor(context),
         dateDividerColor: Colors.transparent,
         includeDateDivider: false,
         allowSelect: false,

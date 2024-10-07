@@ -112,7 +112,7 @@
   "custom-color": "Couleur personnalisée",
   "select": "Sélectionner",
   "default-category-dining": "À manger",
-  "default-category-groceries": "Épiceries",
+  "default-category-groceries": "Courses",
   "default-category-shopping": "Achats",
   "default-category-transit": "Transports",
   "default-category-entertainment": "Divertissement",
@@ -1178,5 +1178,7 @@
   "loans-details": "Détails des prêts",
   "set-details": "Définir les détails",
   "import-warning": "Avertissement d'importation",
-  "import-warning-description": "L'importation peut échouer ! Veuillez vous assurer d'avoir sélectionné un fichier de sauvegarde Cashew [.sqlite] ou [.sql] valide."
+  "import-warning-description": "L'importation peut échouer ! Veuillez vous assurer d'avoir sélectionné un fichier de sauvegarde Cashew [.sqlite] ou [.sql] valide.",
+  "duplicate-budget-question": "Budget en double ?",
+  "duplicate-budget": "Budget en double"
 }

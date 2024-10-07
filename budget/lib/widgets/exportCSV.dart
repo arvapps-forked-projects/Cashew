@@ -93,6 +93,15 @@ class ExportCSV extends StatelessWidget {
               null,
             ),
       );
+      if (transactions.length <= 0) {
+        openSnackbar(SnackbarMessage(
+          title: "no-transactions-within-time-range".tr().capitalizeFirstofEach,
+          icon: appStateSettings["outlinedIcons"]
+              ? Icons.warning_outlined
+              : Icons.warning_rounded,
+        ));
+        return;
+      }
       for (TransactionWithCategory transactionWithCategory in transactions) {
         Map<
             String,
@@ -175,12 +184,13 @@ class ExportCSV extends StatelessWidget {
           await openBottomSheet(
             context,
             PopupFramework(
-                title: "export-csv".tr(),
-                hasPadding: false,
-                child: ExportCSVPopup(
-                  exportCSV: exportCSV,
-                  boxContext: boxContext,
-                )),
+              title: "export-csv".tr(),
+              hasPadding: false,
+              child: ExportCSVPopup(
+                exportCSV: exportCSV,
+                boxContext: boxContext,
+              ),
+            ),
           );
         },
         title: "export-csv".tr(),

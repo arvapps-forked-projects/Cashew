@@ -126,13 +126,7 @@ class AccountsPageState extends State<AccountsPage> {
                             : MoreIcons.google,
                         isExpanded: false,
                         onTap: () async {
-                          loadingIndeterminateKey.currentState
-                              ?.setVisibility(true);
-                          try {
-                            await signInAndSync(context, next: () {});
-                          } catch (e) {
-                            print("Error signing in: " + e.toString());
-                          }
+                          await signInAndSync(context, next: () {});
                         },
                       )
                     ],
@@ -348,7 +342,8 @@ class AccountsPageState extends State<AccountsPage> {
                       //       },
                       //     ),
                       //   ),
-                      getPlatform() == PlatformOS.isIOS
+                      getPlatform() == PlatformOS.isIOS &&
+                              appStateSettings["showExtraInfoText"] != false
                           ? Padding(
                               padding: const EdgeInsetsDirectional.symmetric(
                                   vertical: 20, horizontal: 7),
